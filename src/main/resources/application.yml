@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: messaging-app
@@ -10,3 +11,7 @@ spring:
     url: ${spring.datasource.url}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
+
+logging:
+  level:
+    org.springframework.data.jdbc: DEBUG
