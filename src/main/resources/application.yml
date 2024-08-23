@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: messaging-app
+  datasource:
+    url: jdbc:postgresql://localhost:5432/messenger
+    username: postgres
+    password: password
+  flyway:
+    enabled: false
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
