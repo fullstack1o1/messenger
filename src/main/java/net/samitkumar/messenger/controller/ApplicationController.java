@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/messenger")
 public class ApplicationController {
+
     @GetMapping("/me")
     User me(Authentication authentication) {
         return authentication != null ? (User) authentication.getPrincipal() : User.builder().build();
