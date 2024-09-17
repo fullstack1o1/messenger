@@ -1,19 +1,18 @@
 package net.samitkumar.messenger.repository;
 
 import net.samitkumar.messenger.entity.Message;
-import net.samitkumar.messenger.entity.MessageToType;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface MessageRepository extends ListCrudRepository<Message, Long> {
-    List<Message> findAllByMessageFromAndMessageToAndMessageToType(Long messageFrom, Long messageTo, MessageToType messageToType);
+    @Query("SELECT * FROM messages WHERE (sender_id = :user1 AND receiver_id = :user2) " +
+            "OR (sender_id = :user2 AND receiver_id = :user1) ORDER BY created_at")
+    List<Message> findMessagesBetweenUsers(@Param("user1") Long user1, @Param("user2") Long user2);
 
-    List<Message> findAllByMessageToAndMessageFromAndMessageToType(Long messageTo, Long messageFrom, MessageToType messageToType);
+    @Query("SELECT * FROM messages WHERE group_id = :groupId ORDER BY created_at")
+    List<Message> findMessagesInGroup(@Param("groupId") Long groupId);
 
-    @Query("SELECT * FROM messages WHERE (message_from = :user1 AND message_to = :user2 AND message_to_type = :messageToType) OR (message_from = :user2 AND message_to = :user1 AND message_to_type = :messageToType)")
-    List<Message> findConversationBetweenUsers(Long user1, Long user2, MessageToType messageToType);
-
-    List<Message> findAllByMessageToAndMessageToType(Long messageTo, MessageToType messageToType);
 }

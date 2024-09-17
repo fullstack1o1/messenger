@@ -6,12 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Table("messages")
 @Data
@@ -20,27 +17,11 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class Message {
     @Id
-    private Long id;
-
-    private Long messageTo;
-
-    @Column("message_to_type")
-    @Builder.Default
-    private MessageToType messageToType = MessageToType.USER;
-
-    private Long messageFrom;
-
+    private Long messageId;
+    private Long senderId;
+    private Long receiverId;
+    private Long groupId;
+    private String content;
     @ReadOnlyProperty
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME, pattern = "dd-MM-yyyy")
-    private LocalDate messageDate;
-
-    @ReadOnlyProperty
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME, pattern = "HH:mm:ss")
-    private LocalTime messageTime;
-
-    private String message;
-
-    @Column("message_type")
-    @Builder.Default
-    private MessageType messageType = MessageType.TEXT;
+    private LocalDateTime createdAt;
 }

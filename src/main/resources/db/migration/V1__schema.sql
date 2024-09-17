@@ -1,55 +1,38 @@
 CREATE TABLE users (
-       id SERIAL PRIMARY KEY,
-       name VARCHAR(255) NOT NULL,
-       email VARCHAR(255) UNIQUE NOT NULL,
-       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       user_id SERIAL PRIMARY KEY,
+       user_name VARCHAR(50) UNIQUE NOT NULL,
+       email VARCHAR(100) UNIQUE NOT NULL,
+       password_hash VARCHAR(255) NOT NULL,
+       created_at TIMESTAMP DEFAULT NOW()
 );
 
-INSERT INTO users (name, email) VALUES ('Alice', 'alice@samitkumar.net');
-INSERT INTO users (name, email) VALUES ('Bob', 'bol@samitkumar.net');
-INSERT INTO users (name, email) VALUES ('Charlie', 'charlie@samitkumar.net');
+INSERT INTO users (user_name, email, password_hash) VALUES ('Alice', 'alice@samitkumar.net', '{noop}password');
+INSERT INTO users (user_name, email, password_hash) VALUES ('Bob', 'bol@samitkumar.net', '{noop}password');
+INSERT INTO users (user_name, email, password_hash) VALUES ('Charlie', 'charlie@samitkumar.net', '{noop}password');
 
 CREATE TABLE groups (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        created_by INTEGER REFERENCES users(id),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    group_id SERIAL PRIMARY KEY,
+    group_name VARCHAR(100) NOT NULL,
+    created_by INT REFERENCES users(user_id),
+    created_at TIMESTAMP DEFAULT NOW()
 );
+
 
 CREATE TABLE group_members (
-      group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(group_id, user_id) -- Prevent duplicate user-group pairs
+       group_id INT REFERENCES groups(group_id) ON DELETE CASCADE,
+       user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+       joined_at TIMESTAMP DEFAULT NOW(),
+       PRIMARY KEY (group_id, user_id)
 );
+
 
 CREATE TABLE messages (
-      id SERIAL PRIMARY KEY,
-      message_from INTEGER REFERENCES users(id),
-      message_to INTEGER, -- Can refer to either users(id) or groups(id)
-      message_to_type VARCHAR(10) NOT NULL, -- 'user' or 'group'
-      message_date DATE DEFAULT CURRENT_DATE,
-      message_time TIME DEFAULT CURRENT_TIME,
-      message TEXT NOT NULL,
-      message_type VARCHAR(50) NOT NULL DEFAULT 'TEXT',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_message_to_user FOREIGN KEY (message_to) REFERENCES users(id) ON DELETE CASCADE,
-      CONSTRAINT fk_message_to_group FOREIGN KEY (message_to) REFERENCES groups(id) ON DELETE CASCADE,
-      CHECK (message_to_type IN ('USER', 'GROUP')) -- Restrict values to 'user' or 'group'
-);
-
-CREATE TABLE attachments (
-     id SERIAL PRIMARY KEY,
-     message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
-     file_path VARCHAR(255) NOT NULL,
-     file_type VARCHAR(50) NOT NULL,
-     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE read_receipts (
-      id SERIAL PRIMARY KEY,
-      message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(message_id, user_id) -- Prevent duplicate message-user pairs
+    message_id SERIAL PRIMARY KEY,
+    sender_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    receiver_id INT REFERENCES users(user_id) ON DELETE CASCADE, -- For direct messages (nullable)
+    group_id INT REFERENCES groups(group_id) ON DELETE CASCADE,  -- For group messages (nullable)
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    -- Ensure either receiver_id or group_id is set, not both
+    CHECK ((receiver_id IS NOT NULL AND group_id IS NULL) OR (receiver_id IS NULL AND group_id IS NOT NULL))
 );
