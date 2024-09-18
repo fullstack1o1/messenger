@@ -1,7 +1,11 @@
 package net.samitkumar.messenger.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import net.samitkumar.messenger.entity.Group;
 import net.samitkumar.messenger.entity.User;
+import net.samitkumar.messenger.repository.GroupRepository;
+import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,7 +25,7 @@ import static org.springframework.web.servlet.function.RequestPredicates.accept;
 @RequiredArgsConstructor
 public class ApplicationController {
 
-    @GetMapping("/test/me")
+    @GetMapping("/whoami")
     User me(Authentication authentication) {
         var user = authentication != null ? (User) authentication.getPrincipal() : User.builder().build();
         user.setPasswordHash(null);
@@ -33,15 +37,16 @@ public class ApplicationController {
         return RouterFunctions.route()
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
                 .path("/user", builder -> builder
-                        .GET("", accept(APPLICATION_JSON), userHandler::whoAmI)
+                        .GET("", accept(APPLICATION_JSON), userHandler::all)
                         .POST("", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .GET("/{userId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .GET("/{userId}", accept(APPLICATION_JSON), userHandler::userById)
+                        .GET("/{userId}/group", groupHandler::groupByUser)
                         .PUT("/{userId}", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .DELETE("/{userId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                 )
                 .path("/group", builder -> builder
                         .GET("", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), groupHandler::newGroup)
                         .GET("/{groupId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .PUT("/{groupId}", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .DELETE("/{groupId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
@@ -60,15 +65,41 @@ public class ApplicationController {
 @Component
 @RequiredArgsConstructor
 class UserHandler {
+    final UserRepository userRepository;
     public ServerResponse whoAmI(ServerRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         var user = authentication != null ? (User) authentication.getPrincipal() : User.builder().build();
         return ServerResponse.ok().body(user);
     }
+
+    public ServerResponse all(ServerRequest request) {
+        return ServerResponse.ok().body(userRepository.findAll());
+    }
+
+    public ServerResponse userById(ServerRequest request) {
+        var userId = Long.parseLong(request.pathVariable("userId"));
+        return userRepository.findById(userId)
+                .map(user -> ServerResponse.ok().body(user))
+                .orElse(ServerResponse.status(404).build());
+    }
 }
 
 @Component
-class GroupHandler {}
+@RequiredArgsConstructor
+class GroupHandler {
+    final GroupRepository groupRepository;
+
+    public ServerResponse groupByUser(ServerRequest request) {
+        var userId = Long.parseLong(request.pathVariable("userId"));
+        return ServerResponse.ok().body(groupRepository.findByCreatedBy(userId));
+    }
+
+    @SneakyThrows
+    public ServerResponse newGroup(ServerRequest request) {
+        var group = request.body(Group.class);
+        return ServerResponse.ok().body(groupRepository.save(group));
+    }
+}
 
 @Component
 class MessageHandler {}
