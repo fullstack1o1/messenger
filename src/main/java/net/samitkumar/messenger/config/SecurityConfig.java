@@ -1,5 +1,6 @@
 package net.samitkumar.messenger.config;
 
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.samitkumar.messenger.repository.UserRepository;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,11 +31,15 @@ public class SecurityConfig {
     @SneakyThrows
     public SecurityFilterChain securityFilterChain(HttpSecurity http)  {
         http
-                .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers(HttpMethod.POST, "/signup").permitAll()
-                        .requestMatchers("/error").permitAll()
+                .authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/","/static/**", "/signup").permitAll()
                         .anyRequest().authenticated()
                 )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                )
+                .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults()) //For Basic auth
                 .formLogin(Customizer.withDefaults()); // For Basic Form Login
 
