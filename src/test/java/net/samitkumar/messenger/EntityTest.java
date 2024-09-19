@@ -38,7 +38,7 @@ public class EntityTest {
                 .save(Group.builder()
                         .groupName("Friends")
                         .createdBy(1L)
-                        .groupMembers(Set.of(
+                        .members(Set.of(
                                 GroupMember.builder()
                                         .userId(1L)
                                         .build(),

@@ -10,6 +10,7 @@ import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Table("groups")
@@ -24,7 +25,7 @@ public class Group {
     private Long createdBy;
     @MappedCollection(idColumn = "group_id")
     @Builder.Default
-    private Set<GroupMember> groupMembers = Set.of();
+    private Set<GroupMember> members = new HashSet<>();
     @ReadOnlyProperty
     LocalDateTime createdAt;
 }

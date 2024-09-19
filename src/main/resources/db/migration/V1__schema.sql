@@ -1,14 +1,14 @@
 CREATE TABLE users (
        user_id SERIAL PRIMARY KEY,
-       user_name VARCHAR(50) UNIQUE NOT NULL,
+       username VARCHAR(50) UNIQUE NOT NULL,
        email VARCHAR(100) UNIQUE NOT NULL,
-       password_hash VARCHAR(255) NOT NULL,
+       password VARCHAR(255) NOT NULL,
        created_at TIMESTAMP DEFAULT NOW()
 );
 
-INSERT INTO users (user_name, email, password_hash) VALUES ('Alice', 'alice@samitkumar.net', '{noop}password');
-INSERT INTO users (user_name, email, password_hash) VALUES ('Bob', 'bol@samitkumar.net', '{noop}password');
-INSERT INTO users (user_name, email, password_hash) VALUES ('Charlie', 'charlie@samitkumar.net', '{noop}password');
+INSERT INTO users (username, email, password) VALUES ('Alice', 'alice@samitkumar.net', '{noop}password');
+INSERT INTO users (username, email, password) VALUES ('Bob', 'bol@samitkumar.net', '{noop}password');
+INSERT INTO users (username, email, password) VALUES ('Charlie', 'charlie@samitkumar.net', '{noop}password');
 
 CREATE TABLE groups (
     group_id SERIAL PRIMARY KEY,

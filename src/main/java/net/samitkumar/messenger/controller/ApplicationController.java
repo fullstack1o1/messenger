@@ -13,14 +13,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.servlet.function.RequestPredicates.accept;
+import static org.springframework.web.servlet.function.RequestPredicates.contentType;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,24 +42,24 @@ public class ApplicationController {
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
                 .path("/user", builder -> builder
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
-                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), userHandler::newUser)
+                        .POST("", contentType(APPLICATION_JSON), userHandler::newUser)
                         .GET("/{userId}", accept(APPLICATION_JSON), userHandler::userById)
-                        .GET("/{userId}/group", groupHandler::groupByUser)
-                        .PUT("/{userId}", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .PUT("/{userId}", contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .DELETE("/{userId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                 )
                 .path("/group", builder -> builder
-                        .GET("", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), groupHandler::newGroup)
+                        .GET("", accept(APPLICATION_JSON), groupHandler::fetchUserGroups)
+                        .POST("", contentType(APPLICATION_JSON), groupHandler::newGroup)
+                        .PATCH("/{groupId}", contentType(APPLICATION_JSON), groupHandler::patchGroup)
                         .GET("/{groupId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .PUT("/{groupId}", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .PUT("/{groupId}", contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .DELETE("/{groupId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                 )
                 .path("/message", builder -> builder
                         .GET("", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .POST("", contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .GET("/{messageId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .PUT("/{messageId}", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .PUT("/{messageId}", contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .DELETE("/{messageId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                 )
                 .build();
@@ -88,7 +91,6 @@ class UserHandler {
     @SneakyThrows
     public ServerResponse newUser(ServerRequest request) {
         var newUser = request.body(User.class);
-        System.out.println(newUser);
         newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
         return ServerResponse.ok().body(userRepository.save(newUser));
     }
@@ -99,15 +101,45 @@ class UserHandler {
 class GroupHandler {
     final GroupRepository groupRepository;
 
-    public ServerResponse groupByUser(ServerRequest request) {
-        var userId = Long.parseLong(request.pathVariable("userId"));
-        return ServerResponse.ok().body(groupRepository.findByCreatedBy(userId));
-    }
-
     @SneakyThrows
     public ServerResponse newGroup(ServerRequest request) {
-        var group = request.body(Group.class);
-        return ServerResponse.ok().body(groupRepository.save(group));
+        var newGroup = request.body(Group.class);
+        var user = getCurrentUser();
+        newGroup.setCreatedBy(user.getUserId());
+
+        //TODO try to maintain the createdUser in GroupMember Table
+        //newGroup.getMembers().add(GroupMember.builder().userId(user.getUserId()).build());
+        return ServerResponse.ok().body(groupRepository.save(newGroup));
+    }
+
+    public ServerResponse fetchUserGroups(ServerRequest request) {
+        var user = getCurrentUser();
+        var userOwnGroup = groupRepository.findByCreatedBy(user.getUserId());
+
+        var memberPartOfTheGroup = groupRepository
+                .findAll()
+                .stream()
+                .map(group -> {
+                    if(group.getMembers().stream().anyMatch(groupMember -> groupMember.getUserId().equals(user.getUserId()))) {
+                        return group;
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        userOwnGroup.addAll(memberPartOfTheGroup);
+
+        return ServerResponse.ok().body(userOwnGroup);
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? (User) authentication.getPrincipal() : User.builder().build();
+    }
+
+    public ServerResponse patchGroup(ServerRequest request) {
+        return ServerResponse.noContent().build();
     }
 }
 

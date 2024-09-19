@@ -25,13 +25,11 @@ public class User implements UserDetails {
     @Id
     private Long userId;
 
-    @JsonProperty("userName")
-    private String userName;
+    private String username;
 
     private String email;
 
     @JsonIgnore
-    @Column("password_hash")
     private String password;
 
     @JsonProperty("password")
@@ -56,7 +54,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return userName;
+        return username;
     }
 
     @Override
