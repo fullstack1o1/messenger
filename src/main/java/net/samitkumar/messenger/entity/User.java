@@ -1,6 +1,5 @@
 package net.samitkumar.messenger.entity;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -8,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,12 +24,24 @@ import java.util.List;
 public class User implements UserDetails {
     @Id
     private Long userId;
-    @JsonAlias
-    @JsonProperty("uName")
+
+    @JsonProperty("userName")
     private String userName;
+
     private String email;
+
     @JsonIgnore
-    private String passwordHash;
+    @Column("password_hash")
+    private String password;
+
+    @JsonProperty("password")
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @Builder.Default
+    @Transient
+    private boolean online = Boolean.FALSE;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -38,7 +51,7 @@ public class User implements UserDetails {
     @Override
     @JsonIgnore
     public String getPassword() {
-        return passwordHash;
+        return password;
     }
 
     @Override

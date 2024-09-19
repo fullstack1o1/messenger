@@ -9,6 +9,7 @@ import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +29,7 @@ public class ApplicationController {
     @GetMapping("/whoami")
     User me(Authentication authentication) {
         var user = authentication != null ? (User) authentication.getPrincipal() : User.builder().build();
-        user.setPasswordHash(null);
+        user.setPassword(null);
         return user;
     }
 
@@ -38,7 +39,7 @@ public class ApplicationController {
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
                 .path("/user", builder -> builder
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
-                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
+                        .POST("", RequestPredicates.contentType(APPLICATION_JSON), userHandler::newUser)
                         .GET("/{userId}", accept(APPLICATION_JSON), userHandler::userById)
                         .GET("/{userId}/group", groupHandler::groupByUser)
                         .PUT("/{userId}", RequestPredicates.contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
@@ -66,6 +67,8 @@ public class ApplicationController {
 @RequiredArgsConstructor
 class UserHandler {
     final UserRepository userRepository;
+    final PasswordEncoder passwordEncoder;
+
     public ServerResponse whoAmI(ServerRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         var user = authentication != null ? (User) authentication.getPrincipal() : User.builder().build();
@@ -81,6 +84,13 @@ class UserHandler {
         return userRepository.findById(userId)
                 .map(user -> ServerResponse.ok().body(user))
                 .orElse(ServerResponse.status(404).build());
+    }
+    @SneakyThrows
+    public ServerResponse newUser(ServerRequest request) {
+        var newUser = request.body(User.class);
+        System.out.println(newUser);
+        newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
+        return ServerResponse.ok().body(userRepository.save(newUser));
     }
 }
 
