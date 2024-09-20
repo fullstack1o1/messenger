@@ -9,12 +9,12 @@ import net.samitkumar.messenger.repository.GroupRepository;
 import net.samitkumar.messenger.repository.MessageRepository;
 import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -44,6 +44,7 @@ public class ApplicationController {
     RouterFunction<ServerResponse> route(UserHandler userHandler, GroupHandler groupHandler, MessageHandler messageHandler) {
         return RouterFunctions.route()
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
+                .POST("/signup", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
                 .path("/user", builder -> builder
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
                         .POST("", contentType(APPLICATION_JSON), userHandler::newUser)

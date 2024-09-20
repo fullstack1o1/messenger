@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        body {
+            margin-left: auto;
+            margin-right: auto;
+            width: 30%;
+            margin-top: 100px;
+        }
+        input {
+            width: 250px;
+        }
+        input, button {
+            height: 30px;
+            padding: 5px;
+            margin: 5px 5px;
+        }
+        button {
+            height: 50px;
+            width: 100px;
+        }
+        .validation-e {
+            border-right: 5px solid red;
+        }
+        .validation-s {
+            border-right: 5px solid green;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>{{ message }}</h1>
+        <hr/>
+        <form @submit.prevent="signup">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="flex: 1">
+                    <label>
+                        Username: <br/>
+                        <input type="text" name="username" placeholder="Username" v-model="user.username">
+                    </label>
+                </div>
+                <div style="flex: 2; display: flex; flex-direction: row; gap: 30px;">
+                    <div style="flex: 1" :class="(user.password !== '' && user.re_password !== '' && user.password === user.re_password) ? '' : 'validation-e'">
+                        <label>
+                            Password: <br/>
+                            <input type="password" name="password" placeholder="Password" v-model="user.password" >
+                        </label>
+                    </div>
+                    <div style="flex: 2" :class="(user.password !== '' && user.re_password !== '' && user.password === user.re_password) ? '' : 'validation-e'">
+                        <label>
+                            Repeat Password: <br/>
+                            <input type="password" name="repeat-password" placeholder="Repeat Password" v-model="user.re_password">
+                        </label>
+                    </div>
+                </div>
+                <div style="flex: 3">
+                    <label>
+                        Email: <br/>
+                        <input type="email" name="email" placeholder="Email" v-model="user.email">
+                    </label>
+                </div>
+                <div style="flex: 4">
+                    <button type="submit" :disabled="!user.username || !user.password || !user.re_password || !(user.password === user.re_password) || !user.email">Submit</button>
+                    <button type="reset">Reset</button>
+                </div>
+                <div style="flex: 5">
+                    <p v-if="e" style="color: red">{{ e }}</p>
+                    <p v-if="msg" style="color: green">{{ msg }}</p>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const apiHost = 'http://localhost:8080'
+        const { createApp, ref } = Vue
+
+        createApp({
+            setup() {
+                const message = ref('User Registration!')
+                const e = ref(null)
+                const msg = ref(null)
+                const user = ref({
+                    username: '',
+                    password: '',
+                    re_password: '',
+                    email: ''
+                })
+                const signup = () => {
+                    const myHeaders = new Headers();
+                    myHeaders.append("Content-Type", "application/json");
+                    fetch(`${apiHost}/signup`,{
+                        method: 'POST',
+                        headers: myHeaders,
+                        credentials: "include",
+                        body: JSON.stringify(user.value)
+                    })
+                        .then(response => {
+                            if(!response.ok)
+                                throw new Error(`signUp error ${response.status}`)
+                            return response.json()
+                        })
+                        .then(data => {
+                            user.value = {
+                                username: '',
+                                password: '',
+                                re_password: '',
+                                email: ''
+                            }
+                            msg.value = `It's SUCCESS. ${JSON.stringify(data)}. Will take you to the login page, soon...`
+                            setTimeout(() => {
+                                window.location = `${apiHost}/login`
+                            }, 2000)
+                        })
+                        .catch(error => e.value = error.message)
+                }
+
+                return {
+                    message, user, signup, e, msg
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
