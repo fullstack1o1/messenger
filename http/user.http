@@ -1,0 +1,28 @@
+@HOST=http://localhost:8080
+@EXAMPLE_USERNAME=Alice
+@EXAMPLE_ACCESS_KEY=password
+
+### create new user
+POST {{HOST}}/user
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "dummy",
+  "password": "password",
+  "email": "bob@samit.net"
+}
+
+
+### all users
+GET {{HOST}}/user
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+
+
+### get user by id
+GET{{HOST}}/user/1
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+

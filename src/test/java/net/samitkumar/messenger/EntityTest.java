@@ -3,25 +3,20 @@ package net.samitkumar.messenger;
 import net.samitkumar.messenger.entity.Group;
 import net.samitkumar.messenger.entity.GroupMember;
 import net.samitkumar.messenger.entity.Message;
-import net.samitkumar.messenger.entity.MessageToType;
 import net.samitkumar.messenger.repository.GroupRepository;
 import net.samitkumar.messenger.repository.MessageRepository;
-import net.samitkumar.messenger.repository.ReadReceiptRepository;
 import net.samitkumar.messenger.repository.UserRepository;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
@@ -37,99 +32,87 @@ public class EntityTest {
     @Autowired
     MessageRepository messageRepository;
 
-    @Autowired
-    ReadReceiptRepository readReceiptRepository;
-
     @Test
-    @Order(1)
-    @DisplayName("User Entity Test")
-    void userEntityTest() {
+    void entityTest() {
+        var groupOne = groupRepository
+                .save(Group.builder()
+                        .groupName("Friends")
+                        .createdBy(1L)
+                        .members(Set.of(
+                                GroupMember.builder()
+                                        .userId(1L)
+                                        .build(),
+                                GroupMember.builder()
+                                        .userId(2L)
+                                        .build()
+                        ))
+                        .build());
         assertAll(
-                () -> userRepository.findAll().forEach(System.out::println),
-                /*
-                    User(id=1, name=Alice, email=alice@samitkumar.net)
-                    User(id=2, name=Bob, email=bol@samitkumar.net)
-                    User(id=3, name=Charlie, email=charlie@samitkumar.net)
-                */
-                () -> userRepository.findById(1L).ifPresent(System.out::println)
-                /*
-                    User(id=1, name=Alice, email=alice@samitkumar.net)
-                * */
+                () -> {
+                    assertNotNull(groupOne.getGroupId());
+                    System.out.println(groupOne);
+                    //Group(groupId=1, groupName=Friends, createdBy=1, groupMembers=[GroupMember(groupId=null, userId=1, joinedAt=null), GroupMember(groupId=null, userId=2, joinedAt=null)], createdAt=null)
+                },
+                () -> {
+                    groupRepository.findById(1L).ifPresent(System.out::println);
+                    //Group(groupId=1, groupName=Friends, createdBy=1, groupMembers=[GroupMember(groupId=1, userId=1, joinedAt=2024-09-17T17:25:14.880689), GroupMember(groupId=1, userId=2, joinedAt=2024-09-17T17:25:14.880689)], createdAt=2024-09-17T17:25:14.880689)
+                }
+        );
+
+        assertAll(
+                //message to a user
+                () -> {
+                    //1L-2L
+                    messageRepository.save(Message.builder()
+                            .senderId(1L)
+                            .receiverId(2L)
+                            .content("Hello 2L")
+                            .build());
+                    //1L-3L
+                    messageRepository.save(Message.builder()
+                            .senderId(1L)
+                            .receiverId(3L)
+                            .content("Hello 3L")
+                            .build());
+                    //3L-1L
+                    messageRepository.save(Message.builder()
+                            .senderId(3L)
+                            .receiverId(1L)
+                            .content("Hello 1L")
+                            .build());
+                },
+                //message to a group
+                () -> {
+                    messageRepository.save(Message.builder()
+                            .senderId(1L)
+                            .groupId(groupOne.getGroupId())
+                            .content("Hello All")
+                            .build());
+                },
+                () -> {
+                    messageRepository.findAll().forEach(System.out::println);
+                    /*
+                        Message(messageId=1, senderId=1, receiverId=2, groupId=null, content=Hello 2L, createdAt=2024-09-17T17:36:05.995795)
+                        Message(messageId=2, senderId=1, receiverId=3, groupId=null, content=Hello 3L, createdAt=2024-09-17T17:36:06.002014)
+                        Message(messageId=3, senderId=3, receiverId=1, groupId=null, content=Hello 1L, createdAt=2024-09-17T17:36:06.006876)
+                        Message(messageId=4, senderId=1, receiverId=null, groupId=1, content=Hello All, createdAt=2024-09-17T17:36:06.011083)
+                     */
+                },
+                () -> {
+                    messageRepository.findMessagesBetweenUsers(1L, 2L).forEach(System.out::println);
+                    //Message(messageId=1, senderId=1, receiverId=2, groupId=null, content=Hello 2L, createdAt=2024-09-17T17:36:05.995795)
+
+                    messageRepository.findMessagesBetweenUsers(1L, 3L).forEach(System.out::println);
+                    /*
+                    Message(messageId=2, senderId=1, receiverId=3, groupId=null, content=Hello 3L, createdAt=2024-09-17T17:36:06.002014)
+                    Message(messageId=3, senderId=3, receiverId=1, groupId=null, content=Hello 1L, createdAt=2024-09-17T17:36:06.006876)
+                     */
+                },
+                () -> {
+                    messageRepository.findMessagesInGroup(groupOne.getGroupId()).forEach(System.out::println);
+                    //Message(messageId=4, senderId=1, receiverId=null, groupId=1, content=Hello All, createdAt=2024-09-17T17:36:06.011083)
+                }
         );
     }
 
-    @Test
-    @Order(2)
-    @DisplayName("Group Entity Test")
-    void groupEntityTest() {
-        assertAll(
-                () -> groupRepository.saveAll(List.of(
-                        Group.builder()
-                                .name("School")
-                                .members(
-                                        Set.of(
-                                            GroupMember.builder().userId(1L).build(),
-                                            GroupMember.builder().userId(2L).build()
-                                        )
-                                )
-                                .build(),
-                        Group.builder()
-                                .name("College")
-                                .members(Set.of()).build()
-                )).forEach(System.out::println),
-                /*
-                    Group(id=1, name=School, members=[GroupMember(groupId=null, userId=1), GroupMember(groupId=null, userId=2)])
-                    Group(id=2, name=College, members=[])
-                */
-                () -> groupRepository.findAll().forEach(System.out::println),
-                /*
-                    Group(id=1, name=School, members=[GroupMember(groupId=1, userId=1), GroupMember(groupId=1, userId=2)])
-                    Group(id=2, name=College, members=[])
-                */
-                () -> groupRepository.findById(1L).ifPresent(System.out::println)
-                /*
-                    Group(id=1, name=School, members=[GroupMember(groupId=1, userId=1), GroupMember(groupId=1, userId=2)])
-                * */
-        );
-    }
-
-    @Test
-    @Order(3)
-    @DisplayName("Message Entity Test")
-    void messageEntityTest() {
-        var users = userRepository.findAll();
-        var groups = groupRepository.findAll();
-
-        assertAll(
-                () -> messageRepository.saveAll(List.of(
-                        //conversation between user 1 and user 2
-                        Message.builder().messageFrom(users.get(0).getId()).messageToType(MessageToType.USER).messageTo(users.get(1).getId()).message("Hello, Two!").build(),
-                        Message.builder().messageFrom(users.get(1).getId()).messageToType(MessageToType.USER).messageTo(users.get(0).getId()).message("Hi One!").build(),
-                        //conversation between user 1 and group 1
-                        Message.builder().messageFrom(users.get(0).getId()).messageToType(MessageToType.GROUP).messageTo(groups.get(0).getId()).message("Hi, All!").build()
-                )).forEach(System.out::println),
-                /*
-                    Message(id=1, messageTo=2, messageToType=USER, messageFrom=1, messageDate=null, messageTime=null, message=Hello, Two!, messageType=TEXT)
-                    Message(id=2, messageTo=1, messageToType=USER, messageFrom=2, messageDate=null, messageTime=null, message=Hi One!, messageType=TEXT)
-                    Message(id=3, messageTo=1, messageToType=GROUP, messageFrom=1, messageDate=null, messageTime=null, message=Hi, All!, messageType=TEXT)
-                */
-                () -> messageRepository.findAll().forEach(System.out::println),
-                /*
-                    Message(id=1, messageTo=2, messageToType=USER, messageFrom=1, messageDate=2024-08-23, messageTime=16:09:04, message=Hello, Two!, messageType=TEXT)
-                    Message(id=2, messageTo=1, messageToType=USER, messageFrom=2, messageDate=2024-08-23, messageTime=16:09:04, message=Hi One!, messageType=TEXT)
-                    Message(id=3, messageTo=1, messageToType=GROUP, messageFrom=1, messageDate=2024-08-23, messageTime=16:09:04, message=Hi, All!, messageType=TEXT)
-                */
-                () -> messageRepository.findAllByMessageFromAndMessageToAndMessageToType(1L, 2L, MessageToType.USER).forEach(System.out::println),
-                () -> messageRepository.findAllByMessageToAndMessageFromAndMessageToType(1L, 2L, MessageToType.USER).forEach(System.out::println),
-                /*
-                    Message(id=1, messageTo=2, messageToType=USER, messageFrom=1, messageDate=2024-08-23, messageTime=16:31:58, message=Hello, Two!, messageType=TEXT)
-                    Message(id=2, messageTo=1, messageToType=USER, messageFrom=2, messageDate=2024-08-23, messageTime=16:31:58, message=Hi One!, messageType=TEXT)
-                */
-                () -> messageRepository.findConversationBetweenUsers(1L, 2L, MessageToType.USER).forEach(System.out::println)
-                /*
-                    Message(id=1, messageTo=2, messageToType=USER, messageFrom=1, messageDate=2024-08-23, messageTime=16:35:55, message=Hello, Two!, messageType=TEXT)
-                    Message(id=2, messageTo=1, messageToType=USER, messageFrom=2, messageDate=2024-08-23, messageTime=16:35:55, message=Hi One!, messageType=TEXT)
-                */
-        );
-    }
 }
