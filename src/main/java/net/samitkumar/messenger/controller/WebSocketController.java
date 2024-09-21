@@ -6,15 +6,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class WebSocketController {
-
-    @GetMapping("/register")
-    String register() {
-        return "forward:register.html";
-    }
 
     @MessageMapping("/private")
     void privateMessage(@Payload Message message, Authentication authentication) {

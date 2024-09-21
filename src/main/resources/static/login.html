@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custom::Login</title>
+    <style>
+        body {
+            margin-left: auto;
+            margin-right: auto;
+            width: 30%;
+            margin-top: 40px;
+        }
+        input {
+            height: 30px;
+            width: 200px;
+        }
+        button {
+            width: 60px;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        {{ message }}
+        <hr/>
+        <form @submit.prevent="signOn">
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: auto;">
+                <div style="flex: 1">
+                    <label>
+                        Username: <br/>
+                        <input type="text" name="username" placeholder="Username" v-model="user.username">
+                    </label>
+                </div>
+                <div style="flex: 2">
+                    <label>
+                        Password: <br/>
+                        <input type="password" name="password" placeholder="Password" v-model="user.password">
+                    </label>
+                </div>
+                <div style="flex: 3">
+                    <button type="submit" :disabled="!user.username && !user.password">Submit</button>
+                    <button type="reset">Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp, ref } = Vue
+        const apiHost = "http://localhost:8080"
+        createApp({
+            setup() {
+                const message = ref('Please login')
+                const user = ref({
+                                username: '',
+                                password: ''
+                            })
+                const e = ref(null)
+                const signOn = () => {
+                    console.log(user.value)
+                    fetch(`${apiHost}/login`,{
+                        method: 'POST',
+                        redirect: 'follow',
+                        credentials: "include",
+                        headers: new Headers().append("Content-Type", "application/x-www-form-urlencoded"),
+                        body: new URLSearchParams({
+                                'username': user.value.username,
+                                'password': user.value.password
+                            })
+                    })
+                    .then(response => {
+                        if (response.redirected) {
+                            //window.location.href = response.url;
+                            console.log(response.url)
+                            window.location.href = "index.html";
+                        }
+                    })
+                    .catch(error => e.value = error.message)
+                }
+                return {
+                    message, user, signOn
+                }
+            }
+        }).mount('#app')
+    </script>
+    
+</body>
+</html>
