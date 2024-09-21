@@ -96,7 +96,6 @@
                     fetch(`${apiHost}/signup`,{
                         method: 'POST',
                         headers: myHeaders,
-                        credentials: "include",
                         body: JSON.stringify(user.value)
                     })
                         .then(response => {

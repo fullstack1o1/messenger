@@ -9,7 +9,6 @@ import net.samitkumar.messenger.repository.GroupRepository;
 import net.samitkumar.messenger.repository.MessageRepository;
 import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,7 +30,10 @@ import static org.springframework.web.servlet.function.RequestPredicates.content
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(originPatterns = "*", maxAge = 36000)
 public class ApplicationController {
+    final UserRepository userRepository;
+    final PasswordEncoder passwordEncoder;
 
     @GetMapping("/whoami")
     User me(Authentication authentication) {
@@ -40,11 +42,17 @@ public class ApplicationController {
         return user;
     }
 
+    @PostMapping("/signup")
+    User signup(@RequestBody User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
+
     @Bean
     RouterFunction<ServerResponse> route(UserHandler userHandler, GroupHandler groupHandler, MessageHandler messageHandler) {
         return RouterFunctions.route()
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
-                .POST("/signup", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
+                //.POST("/signup", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
                 .path("/user", builder -> builder
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
                         .POST("", contentType(APPLICATION_JSON), userHandler::newUser)
