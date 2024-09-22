@@ -1,9 +1,8 @@
 package net.samitkumar.messenger.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
@@ -21,11 +20,16 @@ import java.util.Set;
 public class Group {
     @Id
     private Long groupId;
+
+    @JsonAlias({"groupName", "username"})
     private String groupName;
+
     private Long createdBy;
+
     @MappedCollection(idColumn = "group_id")
     @Builder.Default
     private Set<GroupMember> members = new HashSet<>();
+
     @ReadOnlyProperty
     LocalDateTime createdAt;
 }

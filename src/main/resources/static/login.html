@@ -73,7 +73,10 @@
                         if (response.redirected) {
                             //window.location.href = response.url;
                             console.log(response.url)
-                            window.location.href = "index.html";
+                            if(response.status === 200) {
+                                window.location.href = "index.html";
+                            }
+                            
                         }
                     })
                     .catch(error => e.value = error.message)

@@ -20,7 +20,7 @@ import static java.util.Objects.nonNull;
 
 @Component
 @RequiredArgsConstructor
-class GroupHandler {
+public class GroupHandler {
     final GroupRepository groupRepository;
 
     @SneakyThrows

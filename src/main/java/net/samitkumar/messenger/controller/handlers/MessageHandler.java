@@ -9,7 +9,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 @Component
-class MessageHandler {
+public class MessageHandler {
 
     private final MessageRepository messageRepository;
 

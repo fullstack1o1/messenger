@@ -20,7 +20,6 @@ import static org.springframework.web.servlet.function.RequestPredicates.content
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(originPatterns = "*", maxAge = 36000)
 public class ApplicationController {
     final UserRepository userRepository;
     final PasswordEncoder passwordEncoder;
@@ -32,17 +31,17 @@ public class ApplicationController {
         return user;
     }
 
-    @PostMapping("/signup")
+   /* @PostMapping("/signup")
     User signup(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
-    }
+    }*/
 
     @Bean
     RouterFunction<ServerResponse> route(UserHandler userHandler, GroupHandler groupHandler, MessageHandler messageHandler) {
         return RouterFunctions.route()
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
-                //.POST("/signup", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
+                .POST("/signup", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
                 .path("/user", builder -> builder
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
                         .POST("", contentType(APPLICATION_JSON), userHandler::newUser)

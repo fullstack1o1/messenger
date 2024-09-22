@@ -13,7 +13,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 @Component
 @RequiredArgsConstructor
-class UserHandler {
+public class UserHandler {
     final UserRepository userRepository;
     final PasswordEncoder passwordEncoder;
 

@@ -13,11 +13,11 @@
             width: 40%;
             height: 30%;
         }
-        .user {
+        .user, .group {
             padding: 10px;
         }
 
-        .user:hover {
+        .user:hover, .group:hover {
             border: 1px solid green;
             border-radius: 5px;
             cursor: pointer;
@@ -27,6 +27,11 @@
             border-bottom: 1px solid gray;
             border-radius: 5px;
             padding: 10px; /* simple padding */
+        }
+        p small, li small {
+            border: 1px solid black;
+            padding: 10px;
+            border-radius: 25px;
         }
 
         .conversation-IN {
@@ -41,6 +46,14 @@
             height: 30px;
         }
 
+        li {
+            list-style-type: none;
+            justify-content: left;
+        }
+
+        input, select, button {
+            height: 30px;
+        }
     </style>
 </head>
 <body>
@@ -48,37 +61,56 @@
 
     <div id="app">
         <h1>{{ message }}</h1>
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+            <div style="flex: 1;">Welcome {{ me?.username}}</div>
+            <div style="flex: 2;">logout</div>
+        </div>
         <hr/>
         <div style="display: flex; flex-direction: row; gap: 10px; padding: 5px;">
-            <div style="flex: 1;text-align: left; overflow-y: scroll; padding: 5px;">
+            <div style="flex: 1;overflow-y: scroll; padding: 5px;">
                 <p>Users</p>
                 <hr/>
                 <ul>
-                    <li v-for="user in [1,2,3,4,5]" class="user" @click="() => currentSelectedUser = user">{{ user }}</li>
+                    <li v-for="user in users" class="user" @click="() => currentSelectedUser = user">
+                        <small>{{ user.username?.charAt(0)?.toUpperCase() }}</small>
+                        {{ user.username }}
+                    </li>
                 </ul>
                 <hr/>
                 <div style="display: flex; flex-direction: column; padding: 5px;">
                     <div style="display: flex; flex-direction: row; justify-content: space-between;">
                         <div>Group</div>
                         <div>
-                            <button>+</button>
+                            <button @click="() => newGroupToggel = !newGroupToggel">
+                                {{newGroupToggel ? '-' : '+'}}
+                            </button>
                         </div>
                     </div>
-                    <div style="flex: 2; padding: 10px; text-align: center; margin: 5px;">
+                    <div style="flex: 2; padding: 10px; text-align: left; margin: 5px;" v-if="newGroupToggel">
                         <hr/>
                         <form @submit.prevent="">
                             <label>
                                 Enter Group Name:
                                 <input type="text" class="group-form">
                             </label>
-                            <button type="submit" class="group-form">OK</button>
+                            <label>
+                                Add Member:
+                                <select class="group-form">
+                                    <option disabled>Select Member</option>
+                                    <option v-for="u in users" :value="u.userId">{{u.username}}</option>
+                                </select>
+                                <button type="submit" class="group-form">OK</button>
+                            </label>
                         </form>
                         <hr/>
                     </div>
                 </div> 
                 
                 <ul>
-                    <li class="user" v-for="group in ['GroupOne', 'Friends', 'Office']">{{group}}</li>
+                    <li class="group" v-for="group in ['GroupOne', 'Friends', 'Office']" @click="() => currentSelectedUser = group">
+                        <small>{{ group?.charAt(0).toUpperCase() }}</small>
+                        {{group}}
+                    </li>
                 </ul>
             </div>
             <div style="flex: 2; border-left: 1px solid black; padding: 10px;">
@@ -86,18 +118,22 @@
                 <p v-else>Select a user / group to be continue</p>
             </div>
         </div>
+        <footer style="text-align: right;">
+            <small style="color: gray;">@messanger all right reserved!</small>
+        </footer>
     </div>
 
     <template id="chatBox">
         <div style="display: flex; flex-direction: column; gap: 10px;border-bottom: 1px solid black;">
             <div style="flex: 1;" id="chatbox__heading">
-                {{title}} - {{targetUser}}
+                {{title}} - {{targetUser?.username}}
                 <hr/>
             </div>
             <div style="flex: 2; overflow-y: scroll; padding: 10px;" id="chatbox__conversation">
                 <p class="message" v-for="message in conversation" :class="message.type === 'IN' ? 'conversation-IN' : 'conversation-OUT'">
-                    <small v-if="message.type === 'IN'">{{targetUser}}</small>
+                    <small v-if="message.type === 'IN'">{{targetUser?.username}}</small>
                     {{ message.text }}
+                    <small v-if="message.type === 'OUT'">me</small>
                 </p>
             </div>
             <div style="flex: 3;position: relative; bottom: 0;width: 100%;display: flex; justify-content: flex-end;" id="chatbox__message">
@@ -109,7 +145,7 @@
 
     <script>
     const { createApp, ref, toRef, onMounted, computed, watch } = Vue
-    
+    const apiHost = "http://localhost:8080"
     const ChatBox = {
         template: '#chatBox',
         props: ['targetuser'],
@@ -129,8 +165,48 @@
             const message = ref('Messenger')
             const currentSelectedUser = ref(null)
             const me = ref(null)
+            const users = ref([])
+            const e = ref(null)
+            const newGroupToggel = ref(false)
+
+            const whoamI = () => {
+                fetch(`${apiHost}/me`,{
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error('error while fetch me details')
+                    return response.json()
+                })
+                .then(data => {
+                    me.value = data
+                    allUsers()
+                })
+                .catch(error = e.value = error.message)
+            }
+            
+            const allUsers = () => {
+                fetch(`${apiHost}/user`,{
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error('error while fetch user')
+                    return response.json()
+                })
+                .then(data => users.value = data)
+                .catch(error = e.value = error.message)
+            }
+
+            onMounted(() => {
+                
+                whoamI()
+            })
+            
             return {
-                message, currentSelectedUser, me
+                message, currentSelectedUser, me, users, newGroupToggel
             }
         },
         components: {ChatBox}
