@@ -11,10 +11,12 @@
             margin-left: auto;
             margin-right: auto;
             width: 40%;
+            height: 30%;
         }
         .user {
             padding: 10px;
         }
+
         .user:hover {
             border: 1px solid green;
             border-radius: 5px;
@@ -22,7 +24,7 @@
         }
 
         p.message {
-            border: 1px solid gray;
+            border-bottom: 1px solid gray;
             border-radius: 5px;
             padding: 10px; /* simple padding */
         }
@@ -33,6 +35,12 @@
         .conversation-OUT {
             text-align: right;
         }
+
+        .group-form {
+            width: 85%;
+            height: 30px;
+        }
+
     </style>
 </head>
 <body>
@@ -42,21 +50,40 @@
         <h1>{{ message }}</h1>
         <hr/>
         <div style="display: flex; flex-direction: row; gap: 10px; padding: 5px;">
-            <div style="flex: 1;text-align: left; overflow-y: scroll;">
+            <div style="flex: 1;text-align: left; overflow-y: scroll; padding: 5px;">
                 <p>Users</p>
                 <hr/>
                 <ul>
                     <li v-for="user in [1,2,3,4,5]" class="user" @click="() => currentSelectedUser = user">{{ user }}</li>
                 </ul>
                 <hr/>
-                <p>Groups</p>
-                <input type="text"> <button>+</button>
+                <div style="display: flex; flex-direction: column; padding: 5px;">
+                    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                        <div>Group</div>
+                        <div>
+                            <button>+</button>
+                        </div>
+                    </div>
+                    <div style="flex: 2; padding: 10px; text-align: center; margin: 5px;">
+                        <hr/>
+                        <form @submit.prevent="">
+                            <label>
+                                Enter Group Name:
+                                <input type="text" class="group-form">
+                            </label>
+                            <button type="submit" class="group-form">OK</button>
+                        </form>
+                        <hr/>
+                    </div>
+                </div> 
+                
                 <ul>
-                    <li>No</li>
+                    <li class="user" v-for="group in ['GroupOne', 'Friends', 'Office']">{{group}}</li>
                 </ul>
             </div>
             <div style="flex: 2; border-left: 1px solid black; padding: 10px;">
-                <chat-box :targetuser="currentSelectedUser"></chat-box>
+                <chat-box :targetuser="currentSelectedUser" v-if="currentSelectedUser"></chat-box>
+                <p v-else>Select a user / group to be continue</p>
             </div>
         </div>
     </div>
