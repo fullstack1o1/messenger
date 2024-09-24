@@ -7,6 +7,7 @@ import net.samitkumar.messenger.controller.handlers.UserHandler;
 import net.samitkumar.messenger.entity.User;
 import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.servlet.function.RequestPredicates.accept;
 import static org.springframework.web.servlet.function.RequestPredicates.contentType;
 
@@ -30,12 +32,6 @@ public class ApplicationController {
         user.setPassword(null);
         return user;
     }
-
-   /* @PostMapping("/signup")
-    User signup(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }*/
 
     @Bean
     RouterFunction<ServerResponse> route(UserHandler userHandler, GroupHandler groupHandler, MessageHandler messageHandler) {
