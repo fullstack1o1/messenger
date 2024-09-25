@@ -51,7 +51,7 @@
             justify-content: left;
         }
 
-        input, select, button {
+        input, button, select {
             height: 30px;
         }
     </style>
@@ -63,7 +63,9 @@
         <h1>{{ message }}</h1>
         <div style="display: flex; flex-direction: row; justify-content: space-between;">
             <div style="flex: 1;">Welcome {{ me?.username}}</div>
-            <div style="flex: 2;">logout</div>
+            <div style="flex: 2;text-align: right;">
+                <span style="color: blue; cursor: pointer;" @click="() => console.log('logout')">Logout</span>
+            </div>
         </div>
         <hr/>
         <div style="display: flex; flex-direction: row; gap: 10px; padding: 5px;">
@@ -87,29 +89,31 @@
                         </div>
                     </div>
                     <div style="flex: 2; padding: 10px; text-align: left; margin: 5px;" v-if="newGroupToggel">
-                        <hr/>
-                        <form @submit.prevent="">
-                            <label>
-                                Enter Group Name:
-                                <input type="text" class="group-form">
-                            </label>
-                            <label>
-                                Add Member:
-                                <select class="group-form">
-                                    <option disabled>Select Member</option>
-                                    <option v-for="u in users" :value="u.userId">{{u.username}}</option>
-                                </select>
-                                <button type="submit" class="group-form">OK</button>
-                            </label>
+                        <form @submit.prevent="persistNewGroup">
+                            <fieldset>
+                                <legend>New Group:</legend>
+                                <label>
+                                    Group Name:
+                                    <input type="text" class="group-form" v-model="newGroup.name">
+                                </label>
+                                <br/>
+                                <label>
+                                    Add Member:
+                                    <select class="group-form" v-model="newGroup.members" multiple style="margin-bottom: 20px;">
+                                        <option disabled>Select Member</option>
+                                        <option v-for="u in users" :value="u.userId">{{u.username}}</option>
+                                    </select>
+                                    <button type="submit" class="group-form">OK</button>
+                                </label>
+                            </fieldset>
                         </form>
-                        <hr/>
                     </div>
                 </div> 
                 
                 <ul>
-                    <li class="group" v-for="group in ['GroupOne', 'Friends', 'Office']" @click="() => currentSelectedUser = group">
-                        <small>{{ group?.charAt(0).toUpperCase() }}</small>
-                        {{group}}
+                    <li class="group" v-for="group in groups" @click="() => currentSelectedUser = group">
+                        <small>{{ group.groupName?.charAt(0).toUpperCase() }}</small>
+                        {{group.groupName}}
                     </li>
                 </ul>
             </div>
@@ -168,6 +172,8 @@
             const users = ref([])
             const e = ref(null)
             const newGroupToggel = ref(false)
+            const groups = ref([])
+            const newGroup = ref({name: '', members: []})
 
             const whoamI = () => {
                 fetch(`${apiHost}/me`,{
@@ -182,8 +188,9 @@
                 .then(data => {
                     me.value = data
                     allUsers()
+                    userGroups()
                 })
-                .catch(error = e.value = error.message)
+                .catch(error => e.value = error.message)
             }
             
             const allUsers = () => {
@@ -196,20 +203,58 @@
                         throw new Error('error while fetch user')
                     return response.json()
                 })
-                .then(data => users.value = data)
-                .catch(error = e.value = error.message)
+                .then(data => users.value = data.filter(u => u.userId !== me.value.userId))
+                .catch(error => e.value = error.message)
+            }
+            
+            const userGroups = () => {
+                fetch(`${apiHost}/group`,{
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error('error while fetch group')
+                    return response.json()
+                })
+                .then(data => groups.value = data)
+                .catch(error => e.value = error.message)
+            }
+
+            const persistNewGroup = () => {
+                var data = {
+                    groupName: newGroup.value.name,
+                    members: newGroup.value.members.map(m => {return {userId: m}})
+                }
+                fetch(`${apiHost}/group`,{
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error('error while create group')
+                    return response.json()
+                })
+                .then(data => {
+                    userGroups()
+                    newGroupToggel.value = false
+                })
+                .catch(error => e.value = error.message)
             }
 
             onMounted(() => {
-                
                 whoamI()
             })
             
             return {
-                message, currentSelectedUser, me, users, newGroupToggel
+                message, currentSelectedUser, me, users, newGroupToggel, groups, persistNewGroup, newGroup
             }
         },
-        components: {ChatBox}
+        components: { ChatBox }
     }).mount('#app')
     </script>
 </body>
