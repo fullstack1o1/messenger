@@ -75,7 +75,7 @@
                 <p>Users</p>
                 <hr/>
                 <ul>
-                    <li v-for="user in users" class="user" @click="() => currentSelectedUser = user">
+                    <li v-for="user in users" class="user" @click="() => currentSelectedUser = {...user, type: 'USER'}">
                         <small>{{ user.username?.charAt(0)?.toUpperCase() }}</small>
                         {{ user.username }}
                     </li>
@@ -113,14 +113,14 @@
                 </div> 
                 
                 <ul>
-                    <li class="group" v-for="group in groups" @click="() => currentSelectedUser = group">
+                    <li class="group" v-for="group in groups" @click="() => currentSelectedUser = {...group, type: 'GROUP'}">
                         <small>{{ group.groupName?.charAt(0).toUpperCase() }}</small>
                         {{group.groupName}}
                     </li>
                 </ul>
             </div>
             <div style="flex: 2; border-left: 1px solid black; padding: 10px;">
-                <chat-box :me="me" :target-user="currentSelectedUser" v-if="currentSelectedUser"></chat-box>
+                <chat-box :me="me" :target-user="currentSelectedUser" v-if="currentSelectedUser" @send-message="sendMessage"></chat-box>
                 <p v-else>Select a user / group to be continue</p>
             </div>
         </div>
@@ -132,7 +132,7 @@
     <template id="chatBox">
         <div style="display: flex; flex-direction: column; gap: 10px;border-bottom: 1px solid black;">
             <div style="flex: 1;" id="chatbox__heading">
-                Messages between <b>{{me.username}}</b> & <b>{{targetUser?.username || targetUser?.groupName}}</b>
+                Messages between <b>{{me.username}}</b> & <b>{{targetUser.type === 'USER'? targetUser.username : targetUser?.groupName}}</b>
                 <hr/>
             </div>
             <div style="flex: 2; overflow-y: scroll; padding: 10px;" id="chatbox__conversation">
@@ -143,8 +143,11 @@
                 </p>
             </div>
             <div style="flex: 3;position: relative; bottom: 0;width: 100%;display: flex; justify-content: flex-end;" id="chatbox__message">
-                <input type="text" placeholder="message" style="height:30px; width: auto;">
-                <button style="height:40px;">Send</button>
+                <form @submit.prevent="send">
+                    <input type="text" placeholder="message" style="height:30px; width: auto;" v-model="message.content">
+                    <button type="submit" style="height:40px;">Send</button>
+                </form>
+                
             </div>
         </div>
     </template>
@@ -161,9 +164,25 @@
             const targetUser = toRef(props,'targetUser')
             const me = toRef(props,'me')
             const conversation = ref([{"text": 'Hi', "type": "IN"},{"text": 'U There ?', "type": "IN"},{"text": 'Hello', "type": "OUT"},{"text": 'Bro, U lucky B', "type": "IN"}])
+            const message = ref({
+                from: '',
+                to: '',
+                content: ''
+            })
+
+            const send = () => {
+                message.value.to = targetUser.value
+                message.value.from = me.value
+                emit('sendMessage', message.value)
+                message.value = {
+                    from: '',
+                    to: '',
+                    content: ''
+                }
+            }
             
-            return{
-                title, targetUser, conversation
+            return {
+                title, targetUser, conversation, message, send
             }
         }
     }
@@ -180,7 +199,7 @@
             const newGroup = ref({name: '', members: []})
             const stompClient = ref(null)
             const wsStatus = ref(false)
-
+            
             const whoamI = () => {
                 fetch(`${apiHost}/me`,{
                     method: 'GET',
@@ -193,9 +212,10 @@
                 })
                 .then(data => {
                     me.value = data
-                    allUsers()
-                    userGroups()
+                    return data
                 })
+                .then(data => allUsers())
+                .then(data => userGroups())
                 .catch(error => e.value = error.message)
             }
             
@@ -260,7 +280,7 @@
                 const socket = new SockJS(`${apiHost}/ws`);
                 stompClient.value = Stomp.over(socket);
                 
-                stompClient.value.connect({}, function (frame) {
+                stompClient.value.connect({}, frame => {
                     console.log('Connected frame: ' + frame);
                     const headers = { 'auto-delete': true, 'x-message-ttl': 6000}
                     
@@ -271,7 +291,12 @@
                     stompClient.value.subscribe(`/topic/public`, (message) => {
                         console.log(`public:: ${message.body}`)
                     });
+
+                    stompClient.value.send(`${apiHost}/app/m/public`, {}, JSON.stringify({content: "Hi"}))
+
                     wsStatus.value = true
+                },(error) => {
+                    console.log(error)
                 });
             }
 
@@ -281,6 +306,11 @@
                         console.log(`Group ${v}:: ${message.body}`)
                     });
                 })
+            }
+
+            const sendMessage = (m) => {
+                //console.log(m)
+                stompClient.value.send(`${apiHost}/app/private`, {} , JSON.stringify(m))
             }
 
             onMounted(() => {                
@@ -299,7 +329,7 @@
             return {
                 message, currentSelectedUser, me, users, 
                     newGroupToggel, groups, persistNewGroup, newGroup,
-                        wsStatus, logout
+                        wsStatus, logout, sendMessage
             }
         },
         components: { ChatBox }
