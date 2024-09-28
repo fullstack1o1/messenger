@@ -292,7 +292,7 @@
                         console.log(`public:: ${message.body}`)
                     });
 
-                    stompClient.value.send(`${apiHost}/app/m/public`, {}, JSON.stringify({content: "Hi"}))
+                    stompClient.value.send(`/app/public`, {}, JSON.stringify({content: "Hi"}))
 
                     wsStatus.value = true
                 },(error) => {
@@ -310,7 +310,7 @@
 
             const sendMessage = (m) => {
                 //console.log(m)
-                stompClient.value.send(`${apiHost}/app/private`, {} , JSON.stringify(m))
+                stompClient.value.send(`/app/private`, {} , JSON.stringify(m))
             }
 
             onMounted(() => {                
