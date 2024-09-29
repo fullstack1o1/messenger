@@ -61,7 +61,7 @@ public class ApplicationController {
                         .GET("/{messageId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .PUT("/{messageId}", contentType(APPLICATION_JSON), request -> ServerResponse.noContent().build())
                         .DELETE("/{messageId}", accept(APPLICATION_JSON), request -> ServerResponse.noContent().build())
-                        .GET("/between/me/and/{targetUserId}", accept(APPLICATION_JSON), messageHandler::messagesBetweenMeAndTargetUser)
+                        .GET("/between/me/{targetUserId}", accept(APPLICATION_JSON), messageHandler::messagesBetweenMeAndTargetUser)
                 )
                 .build();
     }

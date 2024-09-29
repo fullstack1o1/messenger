@@ -25,13 +25,13 @@ public class MessageHandler {
     public ServerResponse messagesBetweenMeAndTargetUser(ServerRequest request) {
         var targetUserId = Long.parseLong(request.pathVariable("targetUserId"));
         var user = getCurrentUser();
-        return ServerResponse.ok().body(messageRepository.findMessagesBetweenUsers(user.getUserId(), targetUserId));
+        return ServerResponse.ok().body(messageRepository.findMessageBySenderIdAndReceiverIdOrderByCreatedAt(user.getUserId(), targetUserId));
     }
 
     public ServerResponse groupMessages(ServerRequest request) {
         var groupId = Long.parseLong(request.pathVariable("groupId"));
         return ServerResponse
                 .ok()
-                .body(messageRepository.findMessagesInGroup(groupId));
+                .body(messageRepository.findMessagesByGroupIdOrderByCreatedAt(groupId));
     }
 }

@@ -99,17 +99,17 @@ public class EntityTest {
                      */
                 },
                 () -> {
-                    messageRepository.findMessagesBetweenUsers(1L, 2L).forEach(System.out::println);
+                    messageRepository.findMessageBySenderIdAndReceiverIdOrderByCreatedAt(1L, 2L).forEach(System.out::println);
                     //Message(messageId=1, senderId=1, receiverId=2, groupId=null, content=Hello 2L, createdAt=2024-09-17T17:36:05.995795)
 
-                    messageRepository.findMessagesBetweenUsers(1L, 3L).forEach(System.out::println);
+                    messageRepository.findMessageBySenderIdAndReceiverIdOrderByCreatedAt(1L, 3L).forEach(System.out::println);
                     /*
                     Message(messageId=2, senderId=1, receiverId=3, groupId=null, content=Hello 3L, createdAt=2024-09-17T17:36:06.002014)
                     Message(messageId=3, senderId=3, receiverId=1, groupId=null, content=Hello 1L, createdAt=2024-09-17T17:36:06.006876)
                      */
                 },
                 () -> {
-                    messageRepository.findMessagesInGroup(groupOne.getGroupId()).forEach(System.out::println);
+                    messageRepository.findMessagesByGroupIdOrderByCreatedAt(groupOne.getGroupId()).forEach(System.out::println);
                     //Message(messageId=4, senderId=1, receiverId=null, groupId=1, content=Hello All, createdAt=2024-09-17T17:36:06.011083)
                 }
         );

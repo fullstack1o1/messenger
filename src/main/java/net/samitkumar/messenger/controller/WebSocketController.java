@@ -10,6 +10,7 @@ import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -27,17 +28,19 @@ public class WebSocketController {
     final UserRepository userRepository;
 
     @MessageMapping("/public")
-    void publicMessage(@Payload Message message, Authentication authentication) {
+    @SendTo("/topic/queue")
+    Message publicMessage(@Payload Message message, Authentication authentication) {
         var user = (User) authentication.getPrincipal();
-        log.info("########public USER {} = {}", user, message);
+        return message;
     }
 
     @MessageMapping("/private")
     void privateMessage(@Payload Message message, Authentication authentication) {
         var user = (User) authentication.getPrincipal();
-        log.info("private message from {} to {}", user, message);
+
         message.setSenderId(user.getUserId());
         if (nonNull(message.getGroupId())) {
+            log.info("private group message from {} to {}", user, message.getGroupId());
             //message to group
             var savedMessage  = messageRepository.save(message);
             simpMessagingTemplate.convertAndSend("/topic/"+ message.getGroupId(), savedMessage);
@@ -46,7 +49,8 @@ public class WebSocketController {
             var savedMessage = messageRepository.save(message);
             var messageTo = userRepository
                     .findById(message.getReceiverId()).orElseThrow();
-            simpMessagingTemplate.convertAndSendToUser(messageTo.getUsername(),"/queue/", savedMessage);
+            log.info("private message from {} to {}", user, messageTo);
+            simpMessagingTemplate.convertAndSendToUser(messageTo.getUsername(),"/queue/private", savedMessage);
         }
     }
 

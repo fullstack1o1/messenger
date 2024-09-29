@@ -1,0 +1,18 @@
+@HOST=http://localhost:8080
+@EXAMPLE_USERNAME=Alice
+@EXAMPLE_ACCESS_KEY=password
+
+### new group
+POST {{HOST}}/group
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+
+{
+
+}
+
+### fetch
+GET {{HOST}}/message/between/me/3
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json

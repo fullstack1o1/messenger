@@ -222,7 +222,10 @@
                     me.value = data
                     //return data
                 })
-                .then(data => allUsers())
+                .then(data => {
+                    allUsers()
+                    return data
+                })
                 .then(data => userGroups())
                 .catch(error => e.value = error.message)
             }

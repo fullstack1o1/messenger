@@ -42,7 +42,13 @@ Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
     }
   ]
 }
+
 ###
 GET {{HOST}}/group
+Authorization: Basic Charlie {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+
+### group messages
+GET {{HOST}}/group/1/messages
 Authorization: Basic Charlie {{EXAMPLE_ACCESS_KEY}}
 Accept: application/json
