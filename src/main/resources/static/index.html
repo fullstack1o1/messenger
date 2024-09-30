@@ -55,6 +55,10 @@
         input, button, select {
             height: 30px;
         }
+        .selected__user {
+            font-weight: bold;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -83,7 +87,8 @@
                                 <small>{{ user.username?.charAt(0)?.toUpperCase() }}</small>
                             </div>
                             <div style="flex:2;">
-                                {{ user.username }}
+                                <span class="selected__user" v-if="currentSelectedUser?.userId === user?.userId">{{ user.username }}</span>
+                                <span v-else>{{ user.username }}</span>
                             </div>
                             <div style="flex:3; text-align: right;" v-if="user.newMessage">
                                 <span style="background-color: green; color: white; border-radius: 30%; padding: 10px;margin-left: 8px;">{{ user.newMessageCount}}</span>
@@ -131,7 +136,12 @@
                 </ul>
             </div>
             <div style="flex: 2; border-left: 1px solid black; padding: 10px;">
-                <chat-box :me="me" :target-user="currentSelectedUser" v-if="currentSelectedUser" @send-message="sendMessage" :instant-message="instantMessage"></chat-box>
+                <chat-box 
+                    :me="me" 
+                    :target-user="currentSelectedUser" 
+                    v-if="currentSelectedUser" 
+                    @send-message="sendMessage" 
+                    :instant-message="selectedUserInstantMessage"></chat-box>
                 <p v-else>Select a user / group to be continue</p>
             </div>
         </div>
@@ -169,7 +179,7 @@
     const ChatBox = {
         template: '#chatBox',
         props: ['targetUser','me', 'instantMessage'],
-        emits: ['sendMessage'],
+        emits: ['sendMessage', 'clearInstantMessage'],
         setup(props, { emit }){
             const title = ref('ChatBox')
             const targetUser = toRef(props,'targetUser')
@@ -230,15 +240,10 @@
             )
 
             watch(
-                () => instantMessage.value.length,
-                (count) => {
-                    if(targetUser.value && targetUser.value.type === 'USER') {
-                        instantMessage.value.forEach(m => {
-                            if(m.senderId === targetUser.value.userId) {
-                                conversation.value.push({text: m.content, type: 'IN'})
-                            }
-                        })
-                    }
+                () => instantMessage.value,
+                (newValue) => {
+                    transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
+                    emit('clearInstantMessage')
                 },
                 { deep: true }
             )
@@ -267,8 +272,17 @@
                 groupId: '',
                 content: ''
             })
-            const instantMessage = ref([])
             
+            const selectedUserInstantMessage = ref({})
+            
+            watch(
+                () => currentSelectedUser.value,
+                (newValue) => {
+                    selectedUserInstantMessage.value = {} 
+                },
+                {deep: true}
+            )
+
             const whoamI = () => {
                 fetch(`${apiHost}/me`,{
                     method: 'GET',
@@ -356,8 +370,7 @@
                     const headers = { 'auto-delete': true, 'x-message-ttl': 6000}
                     
                     stompClient.value.subscribe(`/user/queue/private`, (message) => {
-                        console.log(`private:: ${message.body}`)
-                        
+                        //TODO think of a stratergy , to get a notification {USER-MESSAGE, GROUP-MESSAGE, ONLINE, OFFLINE & ETC} then pull it from db
                         users.value = users.value.map(u => {
                             if(u.userId === JSON.parse(message.body).senderId) {
                                 u.newMessage = true
@@ -366,7 +379,7 @@
                             return u
                         })
 
-                        instantMessage.value.push(JSON.parse(message.body))
+                        selectedUserInstantMessage.value = JSON.parse(message.body)
 
                     }, headers);
 
@@ -424,7 +437,7 @@
             return {
                 title, currentSelectedUser, me, users, 
                     newGroupToggel, groups, persistNewGroup, newGroup,
-                        wsStatus, logout, sendMessage, instantMessage
+                        wsStatus, logout, sendMessage, selectedUserInstantMessage
             }
         },
         components: { ChatBox }
