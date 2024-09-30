@@ -14,7 +14,9 @@ spring:
 
 logging:
   level:
-    org.springframework.data.jdbc: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.messaging: DEBUG
+    org:
+      springframework:
+        jdbc: DEBUG
+        security: DEBUG
+        web: DEBUG
+        messaging: DEBUG

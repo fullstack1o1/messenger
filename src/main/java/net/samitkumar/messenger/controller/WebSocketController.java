@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
@@ -35,7 +36,8 @@ public class WebSocketController {
     }
 
     @MessageMapping("/private")
-    void privateMessage(@Payload Message message, Authentication authentication) {
+    @SendToUser("/queue/private") // send him self
+    Message privateMessage(@Payload Message message, Authentication authentication) {
         var user = (User) authentication.getPrincipal();
 
         message.setSenderId(user.getUserId());
@@ -44,6 +46,7 @@ public class WebSocketController {
             //message to group
             var savedMessage  = messageRepository.save(message);
             simpMessagingTemplate.convertAndSend("/topic/"+ message.getGroupId(), savedMessage);
+            return savedMessage;
         } else {
             //message to user
             var savedMessage = messageRepository.save(message);
@@ -51,6 +54,7 @@ public class WebSocketController {
                     .findById(message.getReceiverId()).orElseThrow();
             log.info("private message from {} to {}", user, messageTo);
             simpMessagingTemplate.convertAndSendToUser(messageTo.getUsername(),"/queue/private", savedMessage);
+            return savedMessage;
         }
     }
 

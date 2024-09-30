@@ -25,7 +25,7 @@ public class MessageHandler {
     public ServerResponse messagesBetweenMeAndTargetUser(ServerRequest request) {
         var targetUserId = Long.parseLong(request.pathVariable("targetUserId"));
         var user = getCurrentUser();
-        return ServerResponse.ok().body(messageRepository.findMessageBySenderIdAndReceiverIdOrderByCreatedAt(user.getUserId(), targetUserId));
+        return ServerResponse.ok().body(messageRepository.findAllMessagesBetweenTwoUsers(user.getUserId(), targetUserId));
     }
 
     public ServerResponse groupMessages(ServerRequest request) {

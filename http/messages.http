@@ -2,17 +2,7 @@
 @EXAMPLE_USERNAME=Alice
 @EXAMPLE_ACCESS_KEY=password
 
-### new group
-POST {{HOST}}/group
-Accept: application/json
-Content-Type: application/json
-Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
-
-{
-
-}
-
-### fetch
-GET {{HOST}}/message/between/me/3
+### fetch - between 1 and 2
+GET {{HOST}}/message/between/me/2
 Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
 Accept: application/json

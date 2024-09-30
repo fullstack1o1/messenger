@@ -15,6 +15,7 @@
         }
         .user, .group {
             padding: 10px;
+            margin: 5px;
         }
 
         .user:hover, .group:hover {
@@ -76,8 +77,18 @@
                 <hr/>
                 <ul>
                     <li v-for="user in users" class="user" @click="() => currentSelectedUser = {...user, type: 'USER'}">
-                        <small>{{ user.username?.charAt(0)?.toUpperCase() }}</small>
-                        {{ user.username }}
+                        <!--TODO could be a different component ?-->
+                        <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 8px;">
+                            <div style="flex:1; text-align: left;">
+                                <small>{{ user.username?.charAt(0)?.toUpperCase() }}</small>
+                            </div>
+                            <div style="flex:2;">
+                                {{ user.username }}
+                            </div>
+                            <div style="flex:3; text-align: right;" v-if="user.newMessage">
+                                <span style="background-color: green; color: white; border-radius: 30%; padding: 10px;margin-left: 8px;">{{ user.newMessageCount}}</span>
+                            </div>
+                        </div>
                     </li>
                 </ul>
                 <hr/>
@@ -120,7 +131,7 @@
                 </ul>
             </div>
             <div style="flex: 2; border-left: 1px solid black; padding: 10px;">
-                <chat-box :me="me" :target-user="currentSelectedUser" v-if="currentSelectedUser" @send-message="sendMessage"></chat-box>
+                <chat-box :me="me" :target-user="currentSelectedUser" v-if="currentSelectedUser" @send-message="sendMessage" :instant-message="instantMessage"></chat-box>
                 <p v-else>Select a user / group to be continue</p>
             </div>
         </div>
@@ -157,13 +168,14 @@
     const apiHost = "http://localhost:8080"
     const ChatBox = {
         template: '#chatBox',
-        props: ['targetUser','me'],
+        props: ['targetUser','me', 'instantMessage'],
         emits: ['sendMessage'],
         setup(props, { emit }){
             const title = ref('ChatBox')
             const targetUser = toRef(props,'targetUser')
+            const instantMessage = toRef(props,'instantMessage')
             const me = toRef(props,'me')
-            const conversation = ref([{"text": 'Hi', "type": "IN"},{"text": 'U There ?', "type": "IN"},{"text": 'Hello', "type": "OUT"},{"text": 'Bro, U lucky B', "type": "IN"}])
+            const conversation = ref([])
             const message = ref({
                 type: '',
                 to: '',
@@ -182,6 +194,54 @@
                     content: ''
                 }
             }
+
+            const loadConversation = (tgtUser) => {
+                fetch(`${apiHost}/message/between/me/${tgtUser}`,{
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error('error while fetch conversation')
+                    return response.json()
+                })
+                .then(data => transformMessage(data))
+                .then(data => conversation.value = data)
+            }
+
+            const transformMessage = (data) => {
+                return data.map(d => {
+                    if(d.senderId === me.value.userId) {
+                        return {text: d.content, type: 'OUT'}
+                    } else {
+                        return {text: d.content, type: 'IN'}
+                    }
+                })
+            }
+
+            watch(
+                () => targetUser.value,
+                (newVal) => {
+                    if(newVal && newVal.type === 'USER') {
+                        loadConversation(newVal.userId)
+                    }
+                },
+                { deep: true, immediate: true }
+            )
+
+            watch(
+                () => instantMessage.value.length,
+                (count) => {
+                    if(targetUser.value && targetUser.value.type === 'USER') {
+                        instantMessage.value.forEach(m => {
+                            if(m.senderId === targetUser.value.userId) {
+                                conversation.value.push({text: m.content, type: 'IN'})
+                            }
+                        })
+                    }
+                },
+                { deep: true }
+            )
             
             return {
                 title, targetUser, conversation, message, send
@@ -207,6 +267,7 @@
                 groupId: '',
                 content: ''
             })
+            const instantMessage = ref([])
             
             const whoamI = () => {
                 fetch(`${apiHost}/me`,{
@@ -227,6 +288,7 @@
                     return data
                 })
                 .then(data => userGroups())
+                .then(data => connect())
                 .catch(error => e.value = error.message)
             }
             
@@ -283,9 +345,7 @@
                 .catch(error => e.value = error.message)
             }
 
-            const logout = () => {
-                
-            }
+            const logout = () => {}
 
             const connect = () => {
                 const socket = new SockJS(`${apiHost}/ws`);
@@ -297,6 +357,17 @@
                     
                     stompClient.value.subscribe(`/user/queue/private`, (message) => {
                         console.log(`private:: ${message.body}`)
+                        
+                        users.value = users.value.map(u => {
+                            if(u.userId === JSON.parse(message.body).senderId) {
+                                u.newMessage = true
+                                u.newMessageCount = u.newMessageCount ? u.newMessageCount + 1 : 1
+                            }
+                            return u
+                        })
+
+                        instantMessage.value.push(JSON.parse(message.body))
+
                     }, headers);
 
                     stompClient.value.subscribe(`/topic/public`, (message) => {
@@ -339,7 +410,7 @@
 
             onMounted(() => {                
                 whoamI()
-                connect()
+                //connect()
             })
             
             watch(
@@ -353,7 +424,7 @@
             return {
                 title, currentSelectedUser, me, users, 
                     newGroupToggel, groups, persistNewGroup, newGroup,
-                        wsStatus, logout, sendMessage
+                        wsStatus, logout, sendMessage, instantMessage
             }
         },
         components: { ChatBox }
