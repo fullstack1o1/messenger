@@ -1,7 +1,7 @@
 
 spring:
   application:
-    name: messaging-app
+    name: messaging
   datasource:
     url: jdbc:postgresql://localhost:5432/messenger
     username: postgres

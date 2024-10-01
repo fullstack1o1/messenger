@@ -59,6 +59,11 @@
             font-weight: bold;
             text-decoration: underline;
         }
+
+        #chatbox__conversation {
+            overflow-y: scroll;
+            height: 300px; /* Ensure a fixed height */
+        }
     </style>
 </head>
 <body>
@@ -151,19 +156,19 @@
     </div>
 
     <template id="chatBox">
-        <div style="display: flex; flex-direction: column; gap: 10px;border-bottom: 1px solid black;">
+        <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid black;">
             <div style="flex: 1;" id="chatbox__heading">
                 Messages between <b>{{me.username}}</b> & <b>{{targetUser.type === 'USER'? targetUser.username : targetUser?.groupName}}</b>
                 <hr/>
             </div>
-            <div style="flex: 2; overflow-y: scroll; padding: 10px;" id="chatbox__conversation">
+            <div style="flex: 2; padding: 10px;" id="chatbox__conversation">
                 <p class="message" v-for="message in conversation" :class="message.type === 'IN' ? 'conversation-IN' : 'conversation-OUT'">
                     <small v-if="message.type === 'IN'">{{targetUser?.username}}</small>
                     {{ message.text }}
                     <small v-if="message.type === 'OUT'">me</small>
                 </p>
             </div>
-            <div style="flex: 3;position: relative; bottom: 0;width: 100%;display: flex; justify-content: flex-end;" id="chatbox__message">
+            <div style="flex: 3;position: relative; bottom: 0; width: 100%;display: flex; justify-content: flex-end;" id="chatbox__message">
                 <form @submit.prevent="send">
                     <input type="text" placeholder="message" style="height:30px; width: auto;" v-model="message.content">
                     <button type="submit" style="height:40px;">Send</button>
@@ -179,7 +184,7 @@
     const ChatBox = {
         template: '#chatBox',
         props: ['targetUser','me', 'instantMessage'],
-        emits: ['sendMessage', 'clearInstantMessage'],
+        emits: ['sendMessage'],
         setup(props, { emit }){
             const title = ref('ChatBox')
             const targetUser = toRef(props,'targetUser')
@@ -242,8 +247,8 @@
             watch(
                 () => instantMessage.value,
                 (newValue) => {
-                    transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
-                    emit('clearInstantMessage')
+                    if(newValue && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId)
+                        transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
                 },
                 { deep: true }
             )
@@ -378,7 +383,7 @@
                             }
                             return u
                         })
-
+                        //new messages are mainitained in the selectedUserInstantMessage per user basis
                         selectedUserInstantMessage.value = JSON.parse(message.body)
 
                     }, headers);
