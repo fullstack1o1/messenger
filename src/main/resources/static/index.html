@@ -247,8 +247,12 @@
             watch(
                 () => instantMessage.value,
                 (newValue) => {
-                    if(newValue && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId)
+                    if(newValue && targetUser.value.type === 'USER' && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId ) {
                         transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
+                    } else {
+                        //TODO group message
+                    }
+                        
                 },
                 { deep: true }
             )
