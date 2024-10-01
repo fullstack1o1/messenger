@@ -234,11 +234,27 @@
                 })
             }
 
+            const loadGroupConversation = (tgtGroup) => {
+                fetch(`${apiHost}/group/${tgtGroup}/messages`,{
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if(!response.ok)
+                        throw new Error('error while fetch group conversation')
+                    return response.json()
+                })
+                .then(data => transformMessage(data))
+                .then(data => conversation.value = data)
+            }
+
             watch(
                 () => targetUser.value,
                 (newVal) => {
                     if(newVal && newVal.type === 'USER') {
                         loadConversation(newVal.userId)
+                    } else {
+                        loadGroupConversation(newVal.groupId)
                     }
                 },
                 { deep: true, immediate: true }
@@ -251,8 +267,8 @@
                         transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
                     } else {
                         //TODO group message
+                        transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
                     }
-                        
                 },
                 { deep: true }
             )
@@ -407,7 +423,7 @@
             const subscribeGroups = (subscribeTo=[]) => {
                 subscribeTo.forEach((v,k) => {
                     stompClient.value.subscribe(`/topic/${v}`, (message) => {
-                        console.log(`Group ${v}:: ${message.body}`)
+                        selectedUserInstantMessage.value = JSON.parse(message.body)
                     });
                 })
             }
