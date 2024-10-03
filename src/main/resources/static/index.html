@@ -135,7 +135,7 @@
                 
                 <ul>
                     <li class="group" v-for="group in groups" @click="() => currentSelectedUser = {...group, type: 'GROUP'}">
-                        <small>{{ group.groupName?.charAt(0).toUpperCase() }}</small>
+                        <small>{{ group.groupName?.charAt(0)?.toUpperCase() }}</small>
                         {{group.groupName}}
                     </li>
                 </ul>
@@ -170,7 +170,7 @@
             </div>
             <div style="flex: 3;position: relative; bottom: 0; width: 100%;display: flex; justify-content: flex-end;" id="chatbox__message">
                 <form @submit.prevent="send">
-                    <input type="text" placeholder="message" style="height:30px; width: auto;" v-model="message.content">
+                    <input type="text" placeholder="message" style="height:50px; width: auto;" v-model="message.content">
                     <button type="submit" style="height:40px;">Send</button>
                 </form>
                 
@@ -180,7 +180,7 @@
 
     <script>
     const { createApp, ref, toRef, onMounted, computed, watch } = Vue
-    const apiHost = "http://localhost:8080"
+    const apiHost = "http://192.168.0.177:8080"
     const ChatBox = {
         template: '#chatBox',
         props: ['targetUser','me', 'instantMessage'],
@@ -263,10 +263,12 @@
             watch(
                 () => instantMessage.value,
                 (newValue) => {
-                    if(newValue && targetUser.value.type === 'USER' && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId ) {
-                        transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
+                    if(newValue 
+                        && targetUser.value.type === 'USER' 
+                        && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId ) {
+                            transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
                     } else {
-                        //TODO group message
+                        //TODO group message, avoid duplicate while sending
                         transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
                     }
                 },
@@ -408,11 +410,11 @@
 
                     }, headers);
 
-                    stompClient.value.subscribe(`/topic/public`, (message) => {
-                        console.log(`public:: ${message.body}`)
-                    });
+                    // stompClient.value.subscribe(`/topic/public`, (message) => {
+                    //     console.log(`public:: ${message.body}`)
+                    // });
 
-                    stompClient.value.send(`/app/public`, {}, JSON.stringify({content: "Hi"}))
+                    // stompClient.value.send(`/app/public`, {}, JSON.stringify({content: "Hi"}))
 
                     wsStatus.value = true
                 },(error) => {
@@ -448,7 +450,9 @@
 
             onMounted(() => {                
                 whoamI()
-                //connect()
+                allUsers()
+                userGroups()
+                connect()
             })
             
             watch(
