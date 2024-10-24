@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>messenger</title>
     <style>
@@ -13,12 +14,15 @@
             width: 40%;
             height: 30%;
         }
-        .user, .group {
+
+        .user,
+        .group {
             padding: 10px;
             margin: 5px;
         }
 
-        .user:hover, .group:hover {
+        .user:hover,
+        .group:hover {
             border: 1px solid green;
             border-radius: 5px;
             cursor: pointer;
@@ -27,17 +31,25 @@
         p.message {
             border-bottom: 1px solid gray;
             border-radius: 5px;
-            padding: 10px; /* simple padding */
+            padding: 10px;
+            /* simple padding */
         }
-        p small, li small {
+
+        p small,
+        li small {
             border: 1px solid black;
             padding: 10px;
             border-radius: 25px;
         }
 
+        small.datetime {
+            color: gray;
+        }
+
         .conversation-IN {
             text-align: left;
         }
+
         .conversation-OUT {
             text-align: right;
         }
@@ -52,9 +64,12 @@
             justify-content: left;
         }
 
-        input, button, select {
+        input,
+        button,
+        select {
             height: 30px;
         }
+
         .selected__user {
             font-weight: bold;
             text-decoration: underline;
@@ -62,10 +77,12 @@
 
         #chatbox__conversation {
             overflow-y: scroll;
-            height: 300px; /* Ensure a fixed height */
+            height: 300px;
+            /* Ensure a fixed height */
         }
     </style>
 </head>
+
 <body>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
@@ -74,16 +91,16 @@
     <div id="app">
         <h1>{{ title }}</h1>
         <div style="display: flex; flex-direction: row; justify-content: space-between;">
-            <div style="flex: 1;">Welcome {{ me?.username}}</div>
+            <div style="flex: 1;">Welcome <strong>{{ me?.username}}</strong></div>
             <div style="flex: 2;text-align: right;">
                 <span style="color: blue; cursor: pointer;" @click="logout">Logout</span>
             </div>
         </div>
-        <hr/>
+        <hr />
         <div style="display: flex; flex-direction: row; gap: 10px; padding: 5px;">
             <div style="flex: 1;overflow-y: scroll; padding: 5px;">
                 <p>Users</p>
-                <hr/>
+                <hr />
                 <ul>
                     <li v-for="user in users" class="user" @click="() => currentSelectedUser = {...user, type: 'USER'}">
                         <!--TODO could be a different component ?-->
@@ -92,16 +109,19 @@
                                 <small>{{ user.username?.charAt(0)?.toUpperCase() }}</small>
                             </div>
                             <div style="flex:2;">
-                                <span class="selected__user" v-if="currentSelectedUser?.userId === user?.userId">{{ user.username }}</span>
+                                <span class="selected__user" v-if="currentSelectedUser?.userId === user?.userId">{{
+                                    user.username }}</span>
                                 <span v-else>{{ user.username }}</span>
                             </div>
                             <div style="flex:3; text-align: right;" v-if="user.newMessage">
-                                <span style="background-color: green; color: white; border-radius: 30%; padding: 10px;margin-left: 8px;">{{ user.newMessageCount}}</span>
+                                <span
+                                    style="background-color: green; color: white; border-radius: 30%; padding: 10px;margin-left: 8px;">{{
+                                    user.newMessageCount}}</span>
                             </div>
                         </div>
                     </li>
                 </ul>
-                <hr/>
+                <hr />
                 <div style="display: flex; flex-direction: column; padding: 5px;">
                     <div style="display: flex; flex-direction: row; justify-content: space-between;">
                         <div>Group</div>
@@ -119,10 +139,11 @@
                                     Group Name:
                                     <input type="text" class="group-form" v-model="newGroup.name">
                                 </label>
-                                <br/>
+                                <br />
                                 <label>
                                     Add Member:
-                                    <select class="group-form" v-model="newGroup.members" multiple style="margin-bottom: 20px;">
+                                    <select class="group-form" v-model="newGroup.members" multiple
+                                        style="margin-bottom: 20px;">
                                         <option disabled>Select Member</option>
                                         <option v-for="u in users" :value="u.userId">{{u.username}}</option>
                                     </select>
@@ -131,22 +152,20 @@
                             </fieldset>
                         </form>
                     </div>
-                </div> 
-                
+                </div>
+
                 <ul>
-                    <li class="group" v-for="group in groups" @click="() => currentSelectedUser = {...group, type: 'GROUP'}">
+                    <li class="group" v-for="group in groups"
+                        @click="() => currentSelectedUser = {...group, type: 'GROUP'}">
                         <small>{{ group.groupName?.charAt(0)?.toUpperCase() }}</small>
                         {{group.groupName}}
+                        <span style="background-color: green; color: white; border-radius: 30%; padding: 10px;margin-left: 8px;" v-if="group.newMessage">{{ group.newMessageCount}}</span>
                     </li>
                 </ul>
             </div>
             <div style="flex: 2; border-left: 1px solid black; padding: 10px;">
-                <chat-box 
-                    :me="me" 
-                    :target-user="currentSelectedUser" 
-                    v-if="currentSelectedUser" 
-                    @send-message="sendMessage" 
-                    :instant-message="selectedUserInstantMessage"></chat-box>
+                <chat-box :me="me" :target-user="currentSelectedUser" v-if="currentSelectedUser"
+                    @send-message="sendMessage" :instant-message="selectedUserInstantMessage"></chat-box>
                 <p v-else>Select a user / group to be continue</p>
             </div>
         </div>
@@ -158,319 +177,333 @@
     <template id="chatBox">
         <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid black;">
             <div style="flex: 1;" id="chatbox__heading">
-                Messages between <b>{{me.username}}</b> & <b>{{targetUser.type === 'USER'? targetUser.username : targetUser?.groupName}}</b>
-                <hr/>
+                Messages to <strong>{{targetUser.type === 'USER'? targetUser.username : targetUser?.groupName}}</strong>
+                <hr />
             </div>
             <div style="flex: 2; padding: 10px;" id="chatbox__conversation">
-                <p class="message" v-for="message in conversation" :class="message.type === 'IN' ? 'conversation-IN' : 'conversation-OUT'">
-                    <small v-if="message.type === 'IN'">{{targetUser?.username}}</small>
+                <p class="message" v-for="message in conversation"
+                    :class="message.type === 'IN' ? 'conversation-IN' : 'conversation-OUT'">
+                    <small v-if="message.type === 'IN'">{{ message.messageFrom }}</small>
                     {{ message.text }}
                     <small v-if="message.type === 'OUT'">me</small>
                 </p>
             </div>
-            <div style="flex: 3;position: relative; bottom: 0; width: 100%;display: flex; justify-content: flex-end;" id="chatbox__message">
+            <div style="flex: 3;position: relative; bottom: 0; width: 100%;display: flex; justify-content: flex-end;"
+                id="chatbox__message">
                 <form @submit.prevent="send">
-                    <input type="text" placeholder="message" style="height:50px; width: auto;" v-model="message.content">
+                    <input type="text" placeholder="message" style="height:50px; width: auto;"
+                        v-model="message.content">
                     <button type="submit" style="height:40px;">Send</button>
                 </form>
-                
+
             </div>
         </div>
     </template>
 
     <script>
-    const { createApp, ref, toRef, onMounted, computed, watch } = Vue
-    const apiHost = "http://192.168.0.177:8080"
-    const ChatBox = {
-        template: '#chatBox',
-        props: ['targetUser','me', 'instantMessage'],
-        emits: ['sendMessage'],
-        setup(props, { emit }){
-            const title = ref('ChatBox')
-            const targetUser = toRef(props,'targetUser')
-            const instantMessage = toRef(props,'instantMessage')
-            const me = toRef(props,'me')
-            const conversation = ref([])
-            const message = ref({
-                type: '',
-                to: '',
-                content: ''
-            })
-
-            const send = () => {
-                targetUser.value.type === 'USER' ? message.value.to = targetUser.value.userId : message.value.to = targetUser.value.groupId
-                message.value.type = targetUser.value.type
-                
-                emit('sendMessage', message.value)
-                
-                message.value = {
+        const { createApp, ref, toRef, onMounted, computed, watch } = Vue
+        const apiHost = "http://localhost:8080"
+        const ChatBox = {
+            template: '#chatBox',
+            props: ['targetUser', 'me', 'instantMessage'],
+            emits: ['sendMessage'],
+            setup(props, { emit }) {
+                const title = ref('ChatBox')
+                const targetUser = toRef(props, 'targetUser')
+                const instantMessage = toRef(props, 'instantMessage')
+                const me = toRef(props, 'me')
+                const conversation = ref([])
+                const message = ref({
                     type: '',
                     to: '',
                     content: ''
+                })
+
+                const send = () => {
+                    targetUser.value.type === 'USER' ? message.value.to = targetUser.value.userId : message.value.to = targetUser.value.groupId
+                    message.value.type = targetUser.value.type
+
+                    emit('sendMessage', message.value)
+
+                    message.value = {
+                        type: '',
+                        to: '',
+                        content: ''
+                    }
                 }
-            }
 
-            const loadConversation = (tgtUser) => {
-                fetch(`${apiHost}/message/between/me/${tgtUser}`,{
-                    method: 'GET',
-                    credentials: 'include'
-                })
-                .then(response => {
-                    if(!response.ok)
-                        throw new Error('error while fetch conversation')
-                    return response.json()
-                })
-                .then(data => transformMessage(data))
-                .then(data => conversation.value = data)
-            }
+                const loadConversation = (tgtUser) => {
+                    fetch(`${apiHost}/message/between/me/${tgtUser}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('error while fetch conversation')
+                            return response.json()
+                        })
+                        .then(data => transformMessage(data))
+                        .then(data => conversation.value = data)
+                }
 
-            const transformMessage = (data) => {
-                return data.map(d => {
-                    if(d.senderId === me.value.userId) {
-                        return {text: d.content, type: 'OUT'}
-                    } else {
-                        return {text: d.content, type: 'IN'}
-                    }
-                })
-            }
+                const transformMessage = (data) => {
+                    return data.map(d => {
+                        if (d.senderId === me.value.userId) {
+                            return { text: d.content, type: 'OUT', date: d.createdAt }
+                        } else {
+                            return { text: d.content, type: 'IN', messageFrom: d.senderId, date: d.createdAt}
+                        }
+                    })
+                }
 
-            const loadGroupConversation = (tgtGroup) => {
-                fetch(`${apiHost}/group/${tgtGroup}/messages`,{
-                    method: 'GET',
-                    credentials: 'include'
-                })
-                .then(response => {
-                    if(!response.ok)
-                        throw new Error('error while fetch group conversation')
-                    return response.json()
-                })
-                .then(data => transformMessage(data))
-                .then(data => conversation.value = data)
-            }
+                const loadGroupConversation = (tgtGroup) => {
+                    fetch(`${apiHost}/group/${tgtGroup}/messages`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('error while fetch group conversation')
+                            return response.json()
+                        })
+                        .then(data => transformMessage(data))
+                        .then(data => conversation.value = data)
+                }
 
-            watch(
-                () => targetUser.value,
-                (newVal) => {
-                    if(newVal && newVal.type === 'USER') {
-                        loadConversation(newVal.userId)
-                    } else {
-                        loadGroupConversation(newVal.groupId)
-                    }
-                },
-                { deep: true, immediate: true }
-            )
+                watch(
+                    () => targetUser.value,
+                    (newVal) => {
+                        if (newVal && newVal.type === 'USER') {
+                            loadConversation(newVal.userId)
+                        } else {
+                            loadGroupConversation(newVal.groupId)
+                        }
+                    },
+                    { deep: true, immediate: true }
+                )
 
-            watch(
-                () => instantMessage.value,
-                (newValue) => {
-                    if(newValue 
-                        && targetUser.value.type === 'USER' 
-                        && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId ) {
+                watch(
+                    () => instantMessage.value,
+                    (newValue) => {
+                        if (newValue
+                            && targetUser.value.type === 'USER'
+                            && newValue.senderId === targetUser.value.userId || newValue.senderId === me.value.userId) {
                             transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
-                    } else {
-                        //TODO group message, avoid duplicate while sending
-                        transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
-                    }
-                },
-                { deep: true }
-            )
-            
-            return {
-                title, targetUser, conversation, message, send
+                        } else {
+                            transformMessage([instantMessage.value]).forEach(v => conversation.value.push(v))
+                        }
+                    },
+                    { deep: true }
+                )
+
+                return {
+                    title, targetUser, conversation, message, send
+                }
             }
         }
-    }
-    
-    createApp({
-        setup() {
-            const title = ref('Messenger')
-            const currentSelectedUser = ref(null)
-            const me = ref(null)
-            const users = ref([])
-            const e = ref(null)
-            const newGroupToggel = ref(false)
-            const groups = ref([])
-            const newGroup = ref({name: '', members: []})
-            const stompClient = ref(null)
-            const wsStatus = ref(false)
-            const message = ref({
-                messageId: '',
-                receiverId: '',
-                groupId: '',
-                content: ''
-            })
-            
-            const selectedUserInstantMessage = ref({})
-            
-            watch(
-                () => currentSelectedUser.value,
-                (newValue) => {
-                    selectedUserInstantMessage.value = {} 
-                },
-                {deep: true}
-            )
 
-            const whoamI = () => {
-                fetch(`${apiHost}/me`,{
-                    method: 'GET',
-                    credentials: 'include'
-                })
-                .then(response => {
-                    if(!response.ok)
-                        throw new Error('error while fetch me details')
-                    return response.json()
-                })
-                .then(data => {
-                    me.value = data
-                    //return data
-                })
-                .then(data => {
-                    allUsers()
-                    return data
-                })
-                .then(data => userGroups())
-                .then(data => connect())
-                .catch(error => e.value = error.message)
-            }
-            
-            const allUsers = () => {
-                fetch(`${apiHost}/user`,{
-                    method: 'GET',
-                    credentials: 'include'
-                })
-                .then(response => {
-                    if(!response.ok)
-                        throw new Error('error while fetch user')
-                    return response.json()
-                })
-                .then(data => users.value = data.filter(u => u.userId !== me.value.userId))
-                .catch(error => e.value = error.message)
-            }
-            
-            const userGroups = () => {
-                fetch(`${apiHost}/group`,{
-                    method: 'GET',
-                    credentials: 'include'
-                })
-                .then(response => {
-                    if(!response.ok)
-                        throw new Error('error while fetch group')
-                    return response.json()
-                })
-                .then(data => groups.value = data)
-                .catch(error => e.value = error.message)
-            }
-
-            const persistNewGroup = () => {
-                var data = {
-                    groupName: newGroup.value.name,
-                    members: newGroup.value.members.map(m => {return {userId: m}})
-                }
-                fetch(`${apiHost}/group`,{
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                })
-                .then(response => {
-                    if(!response.ok)
-                        throw new Error('error while create group')
-                    return response.json()
-                })
-                .then(data => {
-                    userGroups()
-                    newGroupToggel.value = false
-                })
-                .catch(error => e.value = error.message)
-            }
-
-            const logout = () => {}
-
-            const connect = () => {
-                const socket = new SockJS(`${apiHost}/ws`);
-                stompClient.value = Stomp.over(socket);
-                
-                stompClient.value.connect({}, frame => {
-                    console.log('Connected frame: ' + frame);
-                    const headers = { 'auto-delete': true, 'x-message-ttl': 6000}
-                    
-                    stompClient.value.subscribe(`/user/queue/private`, (message) => {
-                        //TODO think of a stratergy , to get a notification {USER-MESSAGE, GROUP-MESSAGE, ONLINE, OFFLINE & ETC} then pull it from db
-                        users.value = users.value.map(u => {
-                            if(u.userId === JSON.parse(message.body).senderId) {
-                                u.newMessage = true
-                                u.newMessageCount = u.newMessageCount ? u.newMessageCount + 1 : 1
-                            }
-                            return u
-                        })
-                        //new messages are mainitained in the selectedUserInstantMessage per user basis
-                        selectedUserInstantMessage.value = JSON.parse(message.body)
-
-                    }, headers);
-
-                    // stompClient.value.subscribe(`/topic/public`, (message) => {
-                    //     console.log(`public:: ${message.body}`)
-                    // });
-
-                    // stompClient.value.send(`/app/public`, {}, JSON.stringify({content: "Hi"}))
-
-                    wsStatus.value = true
-                },(error) => {
-                    console.log(error)
-                });
-            }
-
-            const subscribeGroups = (subscribeTo=[]) => {
-                subscribeTo.forEach((v,k) => {
-                    stompClient.value.subscribe(`/topic/${v}`, (message) => {
-                        selectedUserInstantMessage.value = JSON.parse(message.body)
-                    });
-                })
-            }
-
-            const sendMessage = (m) => {
-                if(m.type === 'USER') {
-                    message.value.receiverId = m.to
-                } else {
-                    message.value.groupId = m.to
-                }
-                message.value.content = m.content
-                
-                stompClient.value.send(`/app/private`, {} , JSON.stringify(message.value))
-                
-                message.value = {
+        createApp({
+            setup() {
+                const title = ref('Messenger')
+                const currentSelectedUser = ref(null)
+                const me = ref(null)
+                const users = ref([])
+                const e = ref(null)
+                const newGroupToggel = ref(false)
+                const groups = ref([])
+                const newGroup = ref({ name: '', members: [] })
+                const stompClient = ref(null)
+                const wsStatus = ref(false)
+                const message = ref({
                     messageId: '',
                     receiverId: '',
                     groupId: '',
                     content: ''
-                }
-            }
+                })
 
-            onMounted(() => {                
-                whoamI()
-                allUsers()
-                userGroups()
-                connect()
-            })
-            
-            watch(
-                () => groups.value.length,
-                (count) => {
-                   subscribeGroups(groups.value.map(g => g.groupId)) 
-                },
-                { deep: true }
-            )
-            
-            return {
-                title, currentSelectedUser, me, users, 
-                    newGroupToggel, groups, persistNewGroup, newGroup,
-                        wsStatus, logout, sendMessage, selectedUserInstantMessage
-            }
-        },
-        components: { ChatBox }
-    }).mount('#app')
+                const selectedUserInstantMessage = ref({})
+
+                watch(
+                    () => currentSelectedUser.value,
+                    (newValue) => {
+                        selectedUserInstantMessage.value = {}
+                    },
+                    { deep: true }
+                )
+
+                const whoamI = () => {
+                    fetch(`${apiHost}/me`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('error while fetch me details')
+                            return response.json()
+                        })
+                        .then(data => {
+                            me.value = data
+                            //return data
+                        })
+                        .then(data => {
+                            allUsers()
+                            return data
+                        })
+                        .then(data => userGroups())
+                        .then(data => connect())
+                        .catch(error => e.value = error.message)
+                }
+
+                const allUsers = () => {
+                    fetch(`${apiHost}/user`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('error while fetch user')
+                            return response.json()
+                        })
+                        .then(data => users.value = data.filter(u => u.userId !== me.value.userId))
+                        .catch(error => e.value = error.message)
+                }
+
+                const userGroups = () => {
+                    fetch(`${apiHost}/group`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('error while fetch group')
+                            return response.json()
+                        })
+                        .then(data => groups.value = data)
+                        .catch(error => e.value = error.message)
+                }
+
+                const persistNewGroup = () => {
+                    var data = {
+                        groupName: newGroup.value.name,
+                        members: newGroup.value.members.map(m => { return { userId: m } })
+                    }
+                    fetch(`${apiHost}/group`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error('error while create group')
+                            return response.json()
+                        })
+                        .then(data => {
+                            userGroups()
+                            newGroupToggel.value = false
+                        })
+                        .catch(error => e.value = error.message)
+                }
+
+                const logout = () => {}
+
+                const connect = () => {
+                    const socket = new SockJS(`${apiHost}/ws`);
+                    stompClient.value = Stomp.over(socket);
+
+                    stompClient.value.connect({}, frame => {
+                        wsStatus.value = true
+                        console.log('Connected frame: ' + frame);
+                        const headers = { 'auto-delete': true, 'x-message-ttl': 6000 }
+
+                        //user-to-user message queue
+                        stompClient.value.subscribe(`/user/queue/private`, (message) => {
+                            
+                            users.value = users.value.map(u => {
+                                if (u.userId === JSON.parse(message.body).senderId) {
+                                    u.newMessage = true
+                                    u.newMessageCount = u.newMessageCount ? u.newMessageCount + 1 : 1
+                                }
+                                return u
+                            })
+                            
+                            //new messages are mainitained in the selectedUserInstantMessage per user basis
+                            selectedUserInstantMessage.value = JSON.parse(message.body)
+
+                        }, headers);
+
+                        // stompClient.value.subscribe(`/topic/public`, (message) => {
+                        //     console.log(`public:: ${message.body}`)
+                        // });
+                        // stompClient.value.send(`/app/public`, {}, JSON.stringify({content: "Hi"}))
+                        
+
+                        //subscribe to group
+                        subscribeGroups(groups.value.map(g => g.groupId))
+                    }, (error) => {
+                        console.log(error)
+                    });
+                }
+
+                const subscribeGroups = (subscribeTo = []) => {
+                    subscribeTo.forEach((v, k) => {
+                        //user-to-group message topic 
+                        stompClient.value.subscribe(`/topic/${v}`, (message) => {
+                            groups.value = groups.value.map(g => {
+                                if (g.groupId === JSON.parse(message.body).groupId) {
+                                    g.newMessage = true
+                                    g.newMessageCount = g.newMessageCount ? g.newMessageCount + 1 : 1
+                                }
+                                return g;
+                            })
+                            selectedUserInstantMessage.value = JSON.parse(message.body)
+                        });
+                    })
+                }
+
+                const sendMessage = (m) => {
+                    message.value.content = m.content
+
+                    if (m.type === 'USER') {
+                        message.value.receiverId = m.to
+                        stompClient.value.send(`/app/private`, {}, JSON.stringify(message.value))
+                    } else {
+                        message.value.groupId = m.to
+                        stompClient.value.send(`/app/group`, {}, JSON.stringify(message.value))
+                    }
+
+                    message.value = {
+                        messageId: '',
+                        receiverId: '',
+                        groupId: '',
+                        content: ''
+                    }
+                }
+
+                onMounted(() => {
+                    whoamI()
+                    allUsers()
+                    userGroups()
+                    connect()
+                })
+
+                // watch(
+                //     () => groups.value.length,
+                //     (count) => {
+                //         subscribeGroups(groups.value.map(g => g.groupId))
+                //     },
+                //     { deep: true }
+                // )
+
+                return {
+                    title, currentSelectedUser, me, users, newGroupToggel, groups, persistNewGroup, newGroup, wsStatus, logout, sendMessage, selectedUserInstantMessage
+                }
+            },
+            components: { ChatBox }
+        }).mount('#app')
     </script>
 </body>
+
 </html>

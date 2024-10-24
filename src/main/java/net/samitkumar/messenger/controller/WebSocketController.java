@@ -1,6 +1,5 @@
 package net.samitkumar.messenger.controller;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.samitkumar.messenger.entity.Message;
@@ -17,8 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 import java.util.Objects;
-
-import static java.util.Objects.nonNull;
 
 @Controller
 @Slf4j
@@ -40,22 +37,28 @@ public class WebSocketController {
     Message privateMessage(@Payload Message message, Authentication authentication) {
         var user = (User) authentication.getPrincipal();
 
+        Objects.requireNonNull(message.getReceiverId(), "ReceiverId should not be null");
+
         message.setSenderId(user.getUserId());
-        if (nonNull(message.getGroupId())) {
-            log.info("private group message from {} to {}", user, message.getGroupId());
-            //message to group
-            var savedMessage  = messageRepository.save(message);
-            simpMessagingTemplate.convertAndSend("/topic/"+ message.getGroupId(), savedMessage);
-            return savedMessage;
-        } else {
-            //message to user
-            var savedMessage = messageRepository.save(message);
-            var messageTo = userRepository
-                    .findById(message.getReceiverId()).orElseThrow();
-            log.info("private message from {} to {}", user, messageTo);
-            simpMessagingTemplate.convertAndSendToUser(messageTo.getUsername(),"/queue/private", savedMessage);
-            return savedMessage;
-        }
+        //message to user
+        var savedMessage = messageRepository.save(message);
+        var messageTo = userRepository.findById(message.getReceiverId()).orElseThrow();
+        log.info("private message from {} to {}", user, messageTo);
+        simpMessagingTemplate.convertAndSendToUser(messageTo.getUsername(),"/queue/private", savedMessage);
+        return savedMessage;
+    }
+
+    @MessageMapping("/group")
+    Message groupMessage(@Payload Message message, Authentication authentication) {
+        var user = (User) authentication.getPrincipal();
+        Objects.requireNonNull(message.getGroupId(), "GroupId should not be null");
+
+        log.info("private group message from {} to {}", user, message.getGroupId());
+        //message to group
+        message.setSenderId(user.getUserId());
+        var savedMessage  = messageRepository.save(message);
+        simpMessagingTemplate.convertAndSend("/topic/"+ message.getGroupId(), savedMessage);
+        return savedMessage;
     }
 
     @MessageExceptionHandler
