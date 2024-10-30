@@ -1,0 +1,244 @@
+openapi: 3.0.0
+info:
+  title: Chat Application API
+  description: API for chat functionality supporting user-to-user and user-to-group messaging with WebSocket and SockJS events.
+  version: 1.0.0
+
+servers:
+  - url: https://api.chatapp.com/v1
+    description: Main (production) server
+
+paths:
+  /users:
+    get:
+      summary: Fetch all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: Successful response with a list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /users/{userId}/groups:
+    get:
+      summary: Fetch all groups for a particular user
+      operationId: getUserGroups
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response with a list of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+
+  /users/{userId1}/messages/{userId2}:
+    get:
+      summary: Fetch messages between two users
+      operationId: getMessagesBetweenUsers
+      parameters:
+        - name: userId1
+          in: path
+          required: true
+          description: ID of the first user
+          schema:
+            type: string
+        - name: userId2
+          in: path
+          required: true
+          description: ID of the second user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response with a list of messages between two users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+
+  /groups/{groupId}/messages:
+    get:
+      summary: Fetch messages in a group
+      operationId: getGroupMessages
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: ID of the group
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response with a list of group messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+
+  /users/{userId}/messages/unread-count/{fromUserId}:
+    get:
+      summary: Get unread message count from a specific user
+      operationId: getUnreadCountFromUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user receiving unread messages
+          schema:
+            type: string
+        - name: fromUserId
+          in: path
+          required: true
+          description: ID of the user sending unread messages
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unread message count from the specified user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+                    example: 5
+
+  /users/{userId}/groups/{groupId}/unread-count:
+    get:
+      summary: Get unread message count for a user in a group
+      operationId: getUnreadCountInGroup
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: string
+        - name: groupId
+          in: path
+          required: true
+          description: ID of the group
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unread message count in the specified group for the user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+                    example: 8
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user123
+        name:
+          type: string
+          example: John Doe
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          example: group123
+        name:
+          type: string
+          example: Developers
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          example: msg123
+        fromUserId:
+          type: string
+          example: user123
+        toUserId:
+          type: string
+          example: user456
+        groupId:
+          type: string
+          nullable: true
+          example: group123
+        message:
+          type: string
+          example: Hello, how are you?
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-10-08T12:00:00Z'
+        read:
+          type: boolean
+          example: false
+
+  examples:
+    WebSocketEvents:
+      description: WebSocket events for message delivery and user connection status
+      value:
+        events:
+          - MESSAGE:
+              description: Sent when a message is delivered between two users
+              payload:
+                type: MESSAGE
+                fromUserId: user123
+                toUserId: user456
+                message: Hello!
+                timestamp: '2024-10-08T12:00:00Z'
+          - GROUP_MESSAGE:
+              description: Sent when a message is delivered in a group
+              payload:
+                type: GROUP_MESSAGE
+                fromUserId: user123
+                groupId: group123
+                message: Hello, group!
+                timestamp: '2024-10-08T12:05:00Z'
+          - USER_CONNECT:
+              description: Sent when a user connects to the WebSocket
+              payload:
+                type: USER_CONNECT
+                userId: user123
+                timestamp: '2024-10-08T12:10:00Z'
+          - USER_DISCONNECT:
+              description: Sent when a user disconnects from the WebSocket
+              payload:
+                type: USER_DISCONNECT
+                userId: user123
+                timestamp: '2024-10-08T12:15:00Z'
+
+tags:
+  - name: Users
+    description: Operations related to users
+  - name: Groups
+    description: Operations related to groups
+  - name: Messages
+    description: Operations related to messaging
+  - name: WebSocket
+    description: WebSocket event examples
