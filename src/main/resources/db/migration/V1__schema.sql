@@ -38,9 +38,10 @@ CREATE TABLE messages (
 );
 
 -- New table to track message read status
-CREATE TABLE message_reads (
+CREATE TABLE message_read_status (
     message_id INT REFERENCES messages(message_id) ON DELETE CASCADE,
     user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    status VARCHAR(10) NOT NULL check ( status IN ('READ', 'UNREAD')) DEFAULT 'UNREAD',
     read_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (message_id, user_id)
 );

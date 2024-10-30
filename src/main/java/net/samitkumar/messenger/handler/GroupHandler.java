@@ -1,4 +1,4 @@
-package net.samitkumar.messenger.controller.handlers;
+package net.samitkumar.messenger.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

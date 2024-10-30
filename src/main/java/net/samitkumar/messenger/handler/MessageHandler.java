@@ -1,4 +1,4 @@
-package net.samitkumar.messenger.controller.handlers;
+package net.samitkumar.messenger.handler;
 
 import net.samitkumar.messenger.entity.User;
 import net.samitkumar.messenger.repository.MessageRepository;

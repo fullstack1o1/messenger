@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @Table("messages")
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Message {
     @Id
     private Long messageId;

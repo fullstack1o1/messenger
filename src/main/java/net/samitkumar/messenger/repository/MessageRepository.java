@@ -3,10 +3,11 @@ package net.samitkumar.messenger.repository;
 import net.samitkumar.messenger.entity.Message;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.data.repository.ListPagingAndSortingRepository;
 
 import java.util.List;
 
-public interface MessageRepository extends ListCrudRepository<Message, Long> {
+public interface MessageRepository extends ListCrudRepository<Message, Long>, ListPagingAndSortingRepository<Message, Long> {
     List<Message> findMessagesByGroupIdOrderByCreatedAt(Long groupId);
 
     @Query("""
