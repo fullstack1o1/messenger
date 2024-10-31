@@ -57,17 +57,16 @@ public class ApplicationController {
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
                         .POST("", contentType(APPLICATION_JSON), userHandler::newUser)
                         .GET("/{userId}", accept(APPLICATION_JSON), userHandler::userById)
-                        .path("/{userId}/groups", groupUriBuilder -> groupUriBuilder
-                                .GET("/unread-count/{groupId}", request -> ServerResponse.noContent().build())
+                        .path("/me/groups", groupUriBuilder -> groupUriBuilder
                                 .GET("", accept(APPLICATION_JSON), groupHandler::fetchUserGroups)
                                 .POST("", contentType(APPLICATION_JSON), groupHandler::newGroup)
                                 .PATCH("/{groupId}", contentType(APPLICATION_JSON), groupHandler::patchGroup)
-                                .GET("/{groupId}/messages", accept(APPLICATION_JSON), messageHandler::groupMessages)
-                        )
-                        .path("/{userId1}/messages", messageUriBuilder -> messageUriBuilder
-                                .GET("/unread-count/{fromUserId}", request -> ServerResponse.noContent().build())
-                                .GET("/{userId2}", accept(APPLICATION_JSON), messageHandler::messagesBetweenMeAndTargetUser)
-                        )
+                                .DELETE("/{groupId}", contentType(APPLICATION_JSON), groupHandler::deleteGroup)
+                                .GET("/{groupId}/unread-messages-count", contentType(APPLICATION_JSON), groupHandler::unreadMessagesCount)
+                                .GET("/{groupId}/messages", accept(APPLICATION_JSON), messageHandler::groupMessages))
+                        .path("/me/messages", messageUriBuilder -> messageUriBuilder
+                                .GET("/{targetUserId}/unread-messages-count", messageHandler::unreadMessagesCount)
+                                .GET("/{targetUserId}", accept(APPLICATION_JSON), messageHandler::messagesBetweenMeAndTargetUser))
                 )
                 .build();
     }

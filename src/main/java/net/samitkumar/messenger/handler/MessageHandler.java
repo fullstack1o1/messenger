@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.Map;
+
 @Component
 public class MessageHandler {
 
@@ -33,5 +35,13 @@ public class MessageHandler {
         return ServerResponse
                 .ok()
                 .body(messageRepository.findMessagesByGroupIdOrderByCreatedAt(groupId));
+    }
+
+    public ServerResponse unreadMessagesCount(ServerRequest request) {
+        var targetUserId = Long.parseLong(request.pathVariable("targetUserId"));
+        var user = getCurrentUser();
+        return ServerResponse
+                .ok()
+                .body(Map.of("count", 1));
     }
 }

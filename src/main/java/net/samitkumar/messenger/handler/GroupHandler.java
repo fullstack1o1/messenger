@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -80,5 +81,19 @@ public class GroupHandler {
             groupInDb.getMembers().addAll(dataToBeUpdated.getMembers());
         }
         return ServerResponse.ok().body(groupRepository.save(groupInDb));
+    }
+
+    public ServerResponse deleteGroup(ServerRequest request) {
+        var groupId = Long.parseLong(request.pathVariable("groupId"));
+        var user = getCurrentUser();
+        return groupRepository.findByGroupIdAndCreatedBy(groupId, user.getUserId()).map(group -> {
+            groupRepository.delete(group);
+            return ServerResponse.ok().build();
+        }).orElse(ServerResponse.notFound().build());
+
+    }
+
+    public ServerResponse unreadMessagesCount(ServerRequest request) {
+        return ServerResponse.ok().body(Map.of("count",1));
     }
 }
