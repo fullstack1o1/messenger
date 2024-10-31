@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class UserEvent {
+public class InstantMessageResponse {
     Type type;
     Payload payload;
 
@@ -19,6 +19,8 @@ public class UserEvent {
         NEW_GROUP
     }
 
+    @Builder
+    @Data
     public static class Payload {
         private Type type;
         private Long fromUserId;
