@@ -1,14 +1,57 @@
 openapi: 3.0.0
 info:
   title: Chat Application API
-  description: API for chat functionality supporting user-to-user and user-to-group messaging with WebSocket and SockJS events.
-  version: 1.0.0
+  description: API for chat functionality supporting user-to-user and user-to-group messaging.
+  version: 1.1.0
 
 servers:
   - url: https://api.chatapp.com/v1
     description: Main (production) server
 
 paths:
+  /me:
+    get:
+      summary: Get information about the currently authenticated user
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user's information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /signup:
+    post:
+      summary: Register a new user
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignup'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /groups/{groupId}/messages:
+    get:
+      summary: Get messages from a group
+      operationId: getGroupMessagesNoContent
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No content available
+
   /users:
     get:
       summary: Fetch all users
@@ -23,20 +66,47 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
 
-  /users/{userId}/groups:
+    post:
+      summary: Register a new user
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignup'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{userId}:
     get:
-      summary: Fetch all groups for a particular user
-      operationId: getUserGroups
+      summary: Fetch a user by ID
+      operationId: getUserById
       parameters:
         - name: userId
           in: path
           required: true
-          description: ID of the user
           schema:
             type: string
       responses:
         '200':
-          description: Successful response with a list of groups
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/me/groups:
+    get:
+      summary: Fetch all groups for the currently authenticated user
+      operationId: getUserGroups
+      responses:
+        '200':
+          description: List of groups
           content:
             application/json:
               schema:
@@ -44,74 +114,67 @@ paths:
                 items:
                   $ref: '#/components/schemas/Group'
 
-  /users/{userId1}/messages/{userId2}:
-    get:
-      summary: Fetch messages between two users
-      operationId: getMessagesBetweenUsers
-      parameters:
-        - name: userId1
-          in: path
-          required: true
-          description: ID of the first user
-          schema:
-            type: string
-        - name: userId2
-          in: path
-          required: true
-          description: ID of the second user
-          schema:
-            type: string
+    post:
+      summary: Create a new group for the current user
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
       responses:
-        '200':
-          description: Successful response with a list of messages between two users
+        '201':
+          description: Group created successfully
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Message'
+                $ref: '#/components/schemas/Group'
 
-  /groups/{groupId}/messages:
-    get:
-      summary: Fetch messages in a group
-      operationId: getGroupMessages
+  /users/me/groups/{groupId}:
+    patch:
+      summary: Update a group for the current user
+      operationId: updateGroup
       parameters:
         - name: groupId
           in: path
           required: true
-          description: ID of the group
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdate'
       responses:
         '200':
-          description: Successful response with a list of group messages
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Message'
+          description: Group updated successfully
 
-  /users/{userId}/messages/unread-count/{fromUserId}:
-    get:
-      summary: Get unread message count from a specific user
-      operationId: getUnreadCountFromUser
+    delete:
+      summary: Delete a group for the current user
+      operationId: deleteGroup
       parameters:
-        - name: userId
+        - name: groupId
           in: path
           required: true
-          description: ID of the user receiving unread messages
           schema:
             type: string
-        - name: fromUserId
+      responses:
+        '204':
+          description: Group deleted successfully
+
+  /users/me/groups/{groupId}/unread-messages-count:
+    get:
+      summary: Get unread messages count for a group
+      operationId: getUnreadMessagesCountForGroup
+      parameters:
+        - name: groupId
           in: path
           required: true
-          description: ID of the user sending unread messages
           schema:
             type: string
       responses:
         '200':
-          description: Unread message count from the specified user
+          description: Unread messages count for the group
           content:
             application/json:
               schema:
@@ -121,26 +184,39 @@ paths:
                     type: integer
                     example: 5
 
-  /users/{userId}/groups/{groupId}/unread-count:
+  /users/me/groups/{groupId}/messages:
     get:
-      summary: Get unread message count for a user in a group
-      operationId: getUnreadCountInGroup
+      summary: Fetch messages in a group
+      operationId: getGroupMessages
       parameters:
-        - name: userId
-          in: path
-          required: true
-          description: ID of the user
-          schema:
-            type: string
         - name: groupId
           in: path
           required: true
-          description: ID of the group
           schema:
             type: string
       responses:
         '200':
-          description: Unread message count in the specified group for the user
+          description: Messages in the group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+
+  /users/me/messages/{targetUserId}/unread-messages-count:
+    get:
+      summary: Get unread message count from a specific user
+      operationId: getUnreadMessagesCountFromUser
+      parameters:
+        - name: targetUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unread messages count from the specified user
           content:
             application/json:
               schema:
@@ -148,7 +224,27 @@ paths:
                 properties:
                   unreadCount:
                     type: integer
-                    example: 8
+                    example: 2
+
+  /users/me/messages/{targetUserId}:
+    get:
+      summary: Fetch messages between the current user and a target user
+      operationId: getMessagesBetweenUserAndTarget
+      parameters:
+        - name: targetUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Messages between the two users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
 
 components:
   schemas:
@@ -162,6 +258,19 @@ components:
           type: string
           example: John Doe
 
+    UserSignup:
+      type: object
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: john@example.com
+        password:
+          type: string
+          example: "password123"
+
     Group:
       type: object
       properties:
@@ -171,6 +280,13 @@ components:
         name:
           type: string
           example: Developers
+
+    GroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Updated Group Name
 
     Message:
       type: object
@@ -190,55 +306,8 @@ components:
           example: group123
         message:
           type: string
-          example: Hello, how are you?
+          example: "Hello, how are you?"
         timestamp:
           type: string
           format: date-time
           example: '2024-10-08T12:00:00Z'
-        read:
-          type: boolean
-          example: false
-
-  examples:
-    WebSocketEvents:
-      description: WebSocket events for message delivery and user connection status
-      value:
-        events:
-          - MESSAGE:
-              description: Sent when a message is delivered between two users
-              payload:
-                type: MESSAGE
-                fromUserId: user123
-                toUserId: user456
-                message: Hello!
-                timestamp: '2024-10-08T12:00:00Z'
-          - GROUP_MESSAGE:
-              description: Sent when a message is delivered in a group
-              payload:
-                type: GROUP_MESSAGE
-                fromUserId: user123
-                groupId: group123
-                message: Hello, group!
-                timestamp: '2024-10-08T12:05:00Z'
-          - USER_CONNECT:
-              description: Sent when a user connects to the WebSocket
-              payload:
-                type: USER_CONNECT
-                userId: user123
-                timestamp: '2024-10-08T12:10:00Z'
-          - USER_DISCONNECT:
-              description: Sent when a user disconnects from the WebSocket
-              payload:
-                type: USER_DISCONNECT
-                userId: user123
-                timestamp: '2024-10-08T12:15:00Z'
-
-tags:
-  - name: Users
-    description: Operations related to users
-  - name: Groups
-    description: Operations related to groups
-  - name: Messages
-    description: Operations related to messaging
-  - name: WebSocket
-    description: WebSocket event examples
