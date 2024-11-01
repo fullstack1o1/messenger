@@ -36,8 +36,8 @@ public class SecurityConfig {
         return http
                 //.csrf(csrf -> csrf.ignoringRequestMatchers("/register")) // this way we can disable csrf for one endpoint
                 .authorizeHttpRequests((authorize) -> authorize
-                        .dispatcherTypeMatchers(HttpMethod.GET, DispatcherType.FORWARD).permitAll()
-                        .requestMatchers("/register", "/csrf", "/signup", "/static/**").permitAll()
+                        .dispatcherTypeMatchers(HttpMethod.GET, DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/register", "/csrf", "/signup", "/static/**", "/error").permitAll()
                         //.requestMatchers(HttpMethod.POST, "/register").permitAll() // more specific way , but above can be used as well
                         .anyRequest()
                         .authenticated())

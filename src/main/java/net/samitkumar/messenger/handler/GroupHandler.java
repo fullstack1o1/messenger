@@ -30,7 +30,6 @@ public class GroupHandler {
         var user = getCurrentUser();
         newGroup.setCreatedBy(user.getUserId());
 
-        //TODO try to maintain the createdUser in GroupMember Table
         if (nonNull(newGroup.getMembers()) && !newGroup.getMembers().isEmpty()) {
             newGroup.getMembers().add(GroupMember.builder().userId(user.getUserId()).build());
         } else {
@@ -86,11 +85,8 @@ public class GroupHandler {
     public ServerResponse deleteGroup(ServerRequest request) {
         var groupId = Long.parseLong(request.pathVariable("groupId"));
         var user = getCurrentUser();
-        return groupRepository.findByGroupIdAndCreatedBy(groupId, user.getUserId()).map(group -> {
-            groupRepository.delete(group);
-            return ServerResponse.ok().build();
-        }).orElse(ServerResponse.notFound().build());
-
+        groupRepository.findByGroupIdAndCreatedBy(groupId, user.getUserId()).ifPresent(groupRepository::delete);
+        return ServerResponse.ok().build();
     }
 
     public ServerResponse unreadMessagesCount(ServerRequest request) {

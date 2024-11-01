@@ -39,10 +39,15 @@ public class WebSocketController {
     @MessageMapping("/private")
     @SendToUser("/queue/private") // send him self
     InstantMessageResponse privateMessage(@Payload InstantMessageRequest imRequest, Authentication authentication) {
+        //fetch who is the user sending message
         var user = getCurrentUser(authentication);
+
+        //validation
         Objects.requireNonNull(imRequest.getTo(), "to should not be null");
 
+        //Identify if the message is for USER or GROUP
         if (Objects.equals(InstantMessageRequest.MessageType.USER, imRequest.getType())) {
+            //Check If the destination user is exists
             var messageToUser = userRepository.findById(imRequest.getTo()).orElseThrow();
             log.info("private USER-to-USER imRequest from USER: {} to USER: {}", user.getUserId(), messageToUser.getUserId());
 
@@ -53,7 +58,7 @@ public class WebSocketController {
                     .content(imRequest.getContent())
                     .build());
 
-
+            //Prepare the response event
             var userEvent = InstantMessageResponse.builder()
                     .type(InstantMessageResponse.Type.MESSAGE)
                     .payload(InstantMessageResponse.Payload.builder()
@@ -63,13 +68,14 @@ public class WebSocketController {
                             .build())
                     .build();
 
-            //publish instant imRequest
+            //send the event to the target user
             simpMessagingTemplate.convertAndSendToUser(
                     messageToUser.getUsername(),
                     "/queue/private",
                     userEvent);
             return userEvent;
         } else {
+            //Check If the destination group is exists
             var messageToGroup = groupRepository.findById(imRequest.getTo()).orElseThrow();
             log.info("private USER-to-GROUP imRequest from USER: {} to GROUP: {}", user.getUserId(), messageToGroup.getGroupId());
 
@@ -80,7 +86,8 @@ public class WebSocketController {
                     .content(imRequest.getContent())
                     .build());
 
-            var groupIam = InstantMessageResponse.builder()
+            //Prepare the response event
+            var groupInstantMessage = InstantMessageResponse.builder()
                     .type(InstantMessageResponse.Type.GROUP_MESSAGE)
                     .payload(InstantMessageResponse.Payload.builder()
                             .type(InstantMessageResponse.Type.GROUP_MESSAGE)
@@ -90,7 +97,7 @@ public class WebSocketController {
                             .build())
                     .build();
 
-            //send to respective user
+            //send IM to respective user
             messageToGroup.getMembers()
                     .stream()
                     .filter(member -> !Objects.equals(member.getUserId(), user.getUserId()))
@@ -98,11 +105,11 @@ public class WebSocketController {
                         simpMessagingTemplate.convertAndSendToUser(
                                 userRepository.findById(member.getUserId()).orElseThrow().getUsername(),
                                 "/queue/private",
-                                groupIam
+                                groupInstantMessage
                                 );
                     });
 
-            return groupIam;
+            return groupInstantMessage;
         }
     }
 

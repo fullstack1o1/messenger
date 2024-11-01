@@ -18,9 +18,9 @@ Content-Type: application/json
 X-CSRF-TOKEN: {{csrf_value}}
 
 {
-  "username": "unknown",
-  "password": "Password1",
-  "email": "unknown@no-reply.net"
+  "username": "user{{$random.integer(1, 1000)}}",
+  "password": "password",
+  "email": "{{$random.email}}"
 }
 
 ###
@@ -74,7 +74,15 @@ Content-Type: application/json
 X-CSRF-TOKEN: {{csrf_value}}
 
 {
-  "groupName": "1994school"
+  "groupName": "1994School",
+  "members": [
+    {
+      "userId": 2
+    },
+    {
+      "userId": 3
+    }
+  ]
 }
 
 ###
