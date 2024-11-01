@@ -34,7 +34,8 @@ public class SecurityConfig {
     @SneakyThrows
     public SecurityFilterChain filterChain(HttpSecurity http) {
         return http
-                //.csrf(csrf -> csrf.ignoringRequestMatchers("/register")) // this way we can disable csrf for one endpoint
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/signup")) // this way we can disable csrf for one endpoint
+                //TODO Find out by passing csrf token in header for /signup did not work
                 .authorizeHttpRequests((authorize) -> authorize
                         .dispatcherTypeMatchers(HttpMethod.GET, DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/register", "/csrf", "/signup", "/static/**", "/error").permitAll()
