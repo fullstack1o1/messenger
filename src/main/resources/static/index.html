@@ -1,55 +1,250 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>messenger</title>
     <style>
         body {
             margin-left: auto;
             margin-right: auto;
+            margin-bottom: auto;
             width: 40%;
-            height: 30%;
+            font-family: Arial, sans-serif;
         }
+        #messenger {
+            display: flex;
+        }
+        
+        footer {
+            margin-top: 30px;
+        }
+        
+        footer small {
+            display: block;
+            text-align: right;
+            color: gray;
+        }
+
+        #messenger__users {
+            flex: 1.5;
+            height: 500px;
+            overflow-y: scroll;
+        }
+
+        #messenger__users ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #messenger__users ul li {
+            padding: 10px;
+            cursor: pointer;
+            margin: 10px 10px;
+        }
+
+        #messenger__users ul li:hover {
+            border: 1px solid #f0f0f0;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+
+        }
+
+        .messenger__user {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .messenger__user__profile {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            text-align: center;
+            line-height: 30px;
+        }
+
+        .messenger__user__name {
+            display: inline-block;
+        }
+        
+        .messenger__user__onlinestatus {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: green;
+        }
+
+        .messenger__user__unreadmessage {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: red;
+            color: white;
+            text-align: center;
+            line-height: 20px;
+            margin-right: 10px;
+        }
+
+        #messenger__chat__box {
+            flex: 3;
+            border-left: 1px solid gray;
+        }
+
+        #messenger__chat__box h2 {
+            margin-left: 10px;
+            padding: 10px;
+        }
+
+        #messenger__chat__box__input {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        #messenger__chat__box__messages {
+            height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+
+        }
+
+        #messenger__chat__box__messages ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #messenger__chat__box__messages ul li {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+
+        #messenger__chat__box__messages ul li span {
+            display: block;
+        }
+
+        #messenger__chat__box__messages ul li small {
+            display: block;
+            color: gray;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        .messenger__chat__box__message__IN {
+            text-align: right;
+        }
+
+        .messenger__chat__box__message__OUT {
+            text-align: left;
+        }
+
     </style>
 </head>
-
 <body>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-
     <div id="app">
-        <h1>{{ title }}</h1>
+        <h1>{{ message }}</h1>
         <hr/>
-        <div style="display: flex; flex-direction: row; gap: 10px;">
-            <div style="flex: 1">
-                text
+        <div id="messenger">
+            <div id="messenger__users">
+                <ul>
+                    <li class="messenger__user" v-for="user in ['Abc Korne','Deep Chauhan ...','Kilbil Sinha','Bahadur K']">
+                        <span class="messenger__user__profile">&#128115;</span>
+                        <span class="messenger__user__name">{{ user }}</span>
+                        <span class="messenger__user__onlinestatus" v-if="true"></span>
+                        <span class="messenger__user__unreadmessage" v-if="false">0</span>
+                    </li>
+                </ul>
             </div>
-            <div style="flex: 3; text-align: right;">
-                text
+            <div id="messenger__chat__box">
+                <h2>
+                    <span class="messenger__user__profile">&#128115;</span> 
+                    User Name
+                </h2>
+                <div id="messenger__chat__box__messages">
+                    <ul>
+                        <li class="messenger__chat__box__message__OUT">
+                            <small>Me:</small>
+                            <span>Hi, How are you?</span>
+                            <small>10:00 AM</small>
+                        </li>
+                        <li class="messenger__chat__box__message__IN">
+                            <small>User:</small>
+                            <span>Hi, How are you?</span>
+                            <small>10:00 AM</small>
+                        </li>
+                        <li class="messenger__chat__box__message__OUT">
+                            <small>Me:</small>
+                            <span>Hi, How are you?</span>
+                            <small>10:00 AM</small>
+                        </li>
+                        <li class="messenger__chat__box__message__OUT">
+                            <small>Me:</small>
+                            <span>Hi, Uu there?</span>
+                            <small>10:00 AM</small>
+                        </li>
+                    </ul>
+
+                </div>
+                <div id="messenger__chat__box__input">
+                    <input type="text" placeholder="Type your message here..." style="width: 100%; padding: 10px;"/>
+                    <button style="padding: 10px;">Send</button>
+                </div>
             </div>
+        </div>  
+        <footer>
+            <hr/>
+            <small>&copy; All rights reserved</small>
+        </footer>
     </div>
-
-
+    <template id="chatBox"></template>
+    <template id="user"></template>
+    
     <script>
-        const { createApp, ref, toRef, onMounted, computed, watch } = Vue
-        const apiHost = "http://localhost:8080"
+    const { createApp, ref } = Vue
 
-        createApp({
-            setup() {
-                const title = ref('Online Chat')
-                
+    const ChatBox = {
+            template: '#chatBox',
+            props: [],
+            emits: [],
+            setup(props, { emit }) {
                 return {
-                    title
+                    
                 }
-            },
-            //components: {}
-        }).mount('#app')
-    </script>
-</body>
+            }
+        }
+    
+    const User = {
+        template: '#user',
+        props: [],
+        emits: [],
+        setup(props, { emit }) {
+            return {
+                
+            }
+        }
+    }
 
+    createApp({
+        setup() {
+            const message = ref('Online Chat!')
+            return {
+                message
+            }
+        },
+        components: {ChatBox , User }
+    }).mount('#app')
+    </script>
+    
+</body>
 </html>
