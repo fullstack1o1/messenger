@@ -52,20 +52,19 @@ public class ApplicationController {
         return RouterFunctions.route()
                 .GET("/me", accept(APPLICATION_JSON), userHandler::whoAmI)
                 .POST("/signup", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
-                .GET("/groups/{groupId}/messages", request -> ServerResponse.noContent().build())
                 .path("/users", userBuilder -> userBuilder
                         .GET("", accept(APPLICATION_JSON), userHandler::all)
-                        .POST("", contentType(APPLICATION_JSON), userHandler::newUser)
+                        .POST("", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), userHandler::newUser)
                         .GET("/{userId}", accept(APPLICATION_JSON), userHandler::userById)
                         .path("/me/groups", groupUriBuilder -> groupUriBuilder
                                 .GET("", accept(APPLICATION_JSON), groupHandler::fetchUserGroups)
-                                .POST("", contentType(APPLICATION_JSON), groupHandler::newGroup)
-                                .PATCH("/{groupId}", contentType(APPLICATION_JSON), groupHandler::patchGroup)
-                                .DELETE("/{groupId}", contentType(APPLICATION_JSON), groupHandler::deleteGroup)
-                                .GET("/{groupId}/unread-messages-count", contentType(APPLICATION_JSON), groupHandler::unreadMessagesCount)
+                                .POST("", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), groupHandler::newGroup)
+                                .PATCH("/{groupId}", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), groupHandler::patchGroup)
+                                .DELETE("/{groupId}", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), groupHandler::deleteGroup)
+                                .GET("/{groupId}/unread-messages-count", accept(APPLICATION_JSON), groupHandler::unreadMessagesCount)
                                 .GET("/{groupId}/messages", accept(APPLICATION_JSON), messageHandler::groupMessages))
                         .path("/me/messages", messageUriBuilder -> messageUriBuilder
-                                .GET("/{targetUserId}/unread-messages-count", messageHandler::unreadMessagesCount)
+                                .GET("/{targetUserId}/unread-messages-count", accept(APPLICATION_JSON), messageHandler::unreadMessagesCount)
                                 .GET("/{targetUserId}", accept(APPLICATION_JSON), messageHandler::messagesBetweenMeAndTargetUser))
                 )
                 .build();

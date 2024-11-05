@@ -44,10 +44,17 @@
         }
 
         #messenger__users ul li:hover {
-            border: 1px solid #f0f0f0;
+            background-color: blue;
+            color: white;
             border-radius: 5px;
-            background-color: #f0f0f0;
 
+        }
+
+        .messenger__user__selected {
+            background-color: blue;
+            color: white;
+            border-radius: 5px;
+            
         }
 
         .messenger__user {
@@ -97,9 +104,11 @@
             border-left: 1px solid gray;
         }
 
-        #messenger__chat__box h2 {
+        #messenger__chat__box_h2 {
             margin-left: 10px;
             padding: 10px;
+            background-color: blue;
+            color: white;
         }
 
         #messenger__chat__box__input {
@@ -146,6 +155,20 @@
             text-align: left;
         }
 
+        #new__group__form {
+            padding: 10px;
+        }
+
+        #new__group__form label, #new__group__form button {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        #new__group__form input, #new__group__form select, #new__group__form button {
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
     </style>
 </head>
 <body>
@@ -154,52 +177,28 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <div id="app">
         <h1>{{ message }}</h1>
+        <div style="display: flex; justify-content: space-between;">
+            <p>Welcome, {{ me?.username }}</p>
+            <p style="color: blue; cursor: pointer;" @click="logout()">Logout</p>
+        </div>
         <hr/>
+        <p>{{error}}</p>
         <div id="messenger">
             <div id="messenger__users">
                 <ul>
-                    <li class="messenger__user" v-for="user in ['Abc Korne','Deep Chauhan ...','Kilbil Sinha','Bahadur K']">
+                    <li :class=" targetUser === user ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="user in users" @click="() => targetUser = user">
                         <span class="messenger__user__profile">&#128115;</span>
-                        <span class="messenger__user__name">{{ user }}</span>
-                        <span class="messenger__user__onlinestatus" v-if="true"></span>
+                        <span class="messenger__user__name">{{ user.username }}</span>
+                        <span class="messenger__user__onlinestatus" v-if="user.online"></span>
                         <span class="messenger__user__unreadmessage" v-if="false">0</span>
                     </li>
+                    <li>+ New Group</li>
                 </ul>
             </div>
             <div id="messenger__chat__box">
-                <h2>
-                    <span class="messenger__user__profile">&#128115;</span> 
-                    User Name
-                </h2>
-                <div id="messenger__chat__box__messages">
-                    <ul>
-                        <li class="messenger__chat__box__message__OUT">
-                            <small>Me:</small>
-                            <span>Hi, How are you?</span>
-                            <small>10:00 AM</small>
-                        </li>
-                        <li class="messenger__chat__box__message__IN">
-                            <small>User:</small>
-                            <span>Hi, How are you?</span>
-                            <small>10:00 AM</small>
-                        </li>
-                        <li class="messenger__chat__box__message__OUT">
-                            <small>Me:</small>
-                            <span>Hi, How are you?</span>
-                            <small>10:00 AM</small>
-                        </li>
-                        <li class="messenger__chat__box__message__OUT">
-                            <small>Me:</small>
-                            <span>Hi, Uu there?</span>
-                            <small>10:00 AM</small>
-                        </li>
-                    </ul>
-
-                </div>
-                <div id="messenger__chat__box__input">
-                    <input type="text" placeholder="Type your message here..." style="width: 100%; padding: 10px;"/>
-                    <button style="padding: 10px;">Send</button>
-                </div>
+                <p style="text-align: center;" v-if="!targetUser">Select a user to chat</p>
+                <chat-box v-else :me="me" :target-user="targetUser"></chat-box>
+                <!-- <new-group></new-group> -->
             </div>
         </div>  
         <footer>
@@ -207,42 +206,167 @@
             <small>&copy; All rights reserved</small>
         </footer>
     </div>
-    <template id="chatBox"></template>
-    <template id="user"></template>
+    <template id="chatBox">
+        <div >
+            <h2 id="messenger__chat__box_h2">
+                <span class="messenger__user__profile">&#128115;</span> 
+                {{ u?.username }}
+            </h2>
+            <div id="messenger__chat__box__messages">
+                <ul>
+                    <li class="messenger__chat__box__message__OUT">
+                        <small>Me:</small>
+                        <span>Hi, How are you?</span>
+                        <small>10:00 AM</small>
+                    </li>
+                    <li class="messenger__chat__box__message__IN">
+                        <small>User:</small>
+                        <span>Hi, How are you?</span>
+                        <small>10:00 AM</small>
+                    </li>
+                    <li class="messenger__chat__box__message__OUT">
+                        <small>Me:</small>
+                        <span>Hi, How are you?</span>
+                        <small>10:00 AM</small>
+                    </li>
+                    <li class="messenger__chat__box__message__OUT">
+                        <small>Me:</small>
+                        <span>Hi, Uu there?</span>
+                        <small>10:00 AM</small>
+                    </li>
+                </ul>
+
+            </div>
+            <div id="messenger__chat__box__input">
+                <input type="text" placeholder="Type your message here..." style="width: 100%; padding: 10px;"/>
+                <button style="padding: 10px;">Send</button>
+            </div>
+        </div>
+    </template>
+    <template id="newGroup">
+        
+        <form id="new__group__form">
+            <fieldset>
+                <legend>New Group</legend>
+                <label for="name">Group Name</label>
+                <input type="text" id="name">
+                <label for="users">Members</label>
+                <select id="users" multiple>
+                    <option value="">Select users</option>
+                    <option v-for="user in users" :value="user.id">{{ user.username }}</option>
+                </select>
+                <button>Create Group</button>
+            </fieldset>
+        </form>
+
+    </template>
     
     <script>
-    const { createApp, ref } = Vue
+    const { createApp, ref, toRef, onMounted } = Vue
+    const apiHost = 'http://localhost:8080'
 
-    const ChatBox = {
-            template: '#chatBox',
+    const NewGroup = {
+            template: '#newGroup',
             props: [],
             emits: [],
             setup(props, { emit }) {
+                const group = ref(null)
                 return {
-                    
+                    group
                 }
             }
         }
     
-    const User = {
-        template: '#user',
-        props: [],
-        emits: [],
-        setup(props, { emit }) {
-            return {
-                
+    const ChatBox = {
+            template: '#chatBox',
+            props: ['me','targetUser'],
+            emits: [],
+            setup(props, { emit }) {
+                const i = toRef(props, 'me')
+                const u = toRef(props, 'targetUser')
+                return {
+                    i, u
+                }
             }
         }
-    }
 
     createApp({
         setup() {
             const message = ref('Online Chat!')
+            const error = ref(null)
+            const targetUser = ref(null)
+            const me = ref(null)
+            const users = ref([])
+
+            const whoami = () => {
+                fetch(`${apiHost}/me`,{
+                        method: 'GET',
+                        credentials: 'include'
+                })
+                .then(res => {
+                    if(res.ok) {
+                        return res.json()
+                    }
+                    throw new Error('Failed to fetch')
+                })
+                .then(data => {
+                    me.value = data
+                })
+                .then(() => {
+                    allUsers()
+                    wsConnect()
+                })
+                .catch(err => {
+                    error.value = err.message
+                })
+            }
+
+            const allUsers = () => {
+                fetch(`${apiHost}/users`,{
+                        method: 'GET',
+                        credentials: 'include'
+                })
+                .then(res => {
+                    if(!res.ok) {
+                        throw new Error('Failed to fetch')
+                    }
+                    return res.json()
+                })
+                .then(data => {
+                    users.value = data
+                })
+                .catch(err => {
+                    error.value = err.message
+                })
+            }
+
+            const logout = () => {
+                document.cookie = 'JSESSIONID = ; Max-Age=0; path=/;'
+                window.location.href = `${apiHost}/logout`
+            }
+
+            const wsConnect = () => {
+                const socket = new SockJS(`${apiHost}/ws`)
+                const stompClient = Stomp.over(socket)
+                
+                stompClient.connect({}, frame => {
+                    console.log('Connected: ' + frame)
+                    const headers = { 'auto-delete': true, 'x-message-ttl': 6000 }
+                    stompClient.subscribe('/user/queue/private', message => {
+                        console.log('Received: ' + message.body)
+                    }, headers)
+                })
+            }
+
+            onMounted(() => {
+                whoami()
+            })
+
             return {
-                message
+                message, error, targetUser, me, users, logout
             }
         },
-        components: {ChatBox , User }
+        components: { ChatBox, NewGroup }
     }).mount('#app')
     </script>
     
