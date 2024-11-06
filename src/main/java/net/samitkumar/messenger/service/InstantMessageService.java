@@ -12,14 +12,14 @@ public class InstantMessageService {
     final SimpMessagingTemplate simpMessagingTemplate;
     private final static String PRIVATE_QUEUE_ENDPOINT = "/queue/private";
 
-    public InstantMessageResponse sendInstantMessage(InstantMessageResponse.Type type, Long fromUserId, String toUserName, String messageIfAny) {
-        return InstantMessageResponse.builder()
+    public void sendInstantMessage(InstantMessageResponse.Type type, Long fromUserId, String toUserName, String messageIfAny) {
+        simpMessagingTemplate.convertAndSendToUser(toUserName, PRIVATE_QUEUE_ENDPOINT, InstantMessageResponse.builder()
                 .type(type)
                 .payload(InstantMessageResponse.Payload.builder()
                         .type(type)
                         .fromUserId(fromUserId)
                         .message(messageIfAny)
                         .build())
-                .build();
+                .build());
     }
 }

@@ -5,7 +5,10 @@ import lombok.SneakyThrows;
 import net.samitkumar.messenger.entity.Group;
 import net.samitkumar.messenger.entity.GroupMember;
 import net.samitkumar.messenger.entity.User;
+import net.samitkumar.messenger.model.InstantMessageResponse;
 import net.samitkumar.messenger.repository.GroupRepository;
+import net.samitkumar.messenger.repository.UserRepository;
+import net.samitkumar.messenger.service.InstantMessageService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,8 @@ import static java.util.Objects.nonNull;
 @RequiredArgsConstructor
 public class GroupHandler {
     final GroupRepository groupRepository;
+    final InstantMessageService instantMessageService;
+    final UserRepository userRepository;
 
     @SneakyThrows
     public ServerResponse newGroup(ServerRequest request) {
@@ -35,6 +40,11 @@ public class GroupHandler {
         } else {
             newGroup.setMembers(Set.of(GroupMember.builder().userId(user.getUserId()).build()));
         }
+
+        //notify all the member of the group
+        newGroup.getMembers().forEach(groupMember -> {
+            userRepository.findById(groupMember.getUserId()).ifPresent(u -> instantMessageService.sendInstantMessage(InstantMessageResponse.Type.NEW_GROUP, newGroup.getCreatedBy(), u.getUsername(), "You have been added to a group"));
+        });
 
         return ServerResponse.ok().body(groupRepository.save(newGroup));
     }
@@ -90,6 +100,7 @@ public class GroupHandler {
     }
 
     public ServerResponse unreadMessagesCount(ServerRequest request) {
+        var groupId = Long.parseLong(request.pathVariable("groupId"));
         return ServerResponse.ok().body(Map.of("count",1));
     }
 }
