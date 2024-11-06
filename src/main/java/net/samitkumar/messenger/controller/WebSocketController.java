@@ -62,6 +62,7 @@ public class WebSocketController {
             var userEvent = InstantMessageResponse.builder()
                     .type(InstantMessageResponse.Type.MESSAGE)
                     .payload(InstantMessageResponse.Payload.builder()
+                            .type(InstantMessageResponse.Type.MESSAGE)
                             .fromUserId(user.getUserId())
                             .toUserId(imRequest.getTo())
                             .message(imRequest.getContent())
