@@ -186,14 +186,14 @@
         <div id="messenger">
             <div id="messenger__users">
                 <ul>
-                    <li :class=" targetUser === user ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="user in users" @click="() => targetUser = user">
+                    <li :class=" targetUser === user ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="user in users" @click="() => targetUser = { ...user, type: 'USER'}">
                         <span class="messenger__user__profile">&#128115;</span>
                         <span class="messenger__user__name">{{ user.username }}</span>
                         <span class="messenger__user__onlinestatus" v-if="user.online"></span>
                         <span class="messenger__user__unreadmessage" v-if="false">0</span>
                     </li>
                     <li :class="displayNewGroupForm ? 'messenger__user__selected' : ''" @click="() => displayNewGroupForm = !displayNewGroupForm">{{ displayNewGroupForm ? '- New Group' : '+ New Group'}}</li>
-                    <li :class=" targetUser === group ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="group in userGroups" @click="() => targetUser = group">
+                    <li :class=" targetUser === group ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="group in userGroups" @click="() => targetUser = { ...group, userId: group.groupId, username: group.groupName, type: 'GROUP' }">
                         <span class="messenger__user__profile">&#128115;</span>
                         <span class="messenger__user__name">{{ group.groupName }}</span>
                         <span class="messenger__user__unreadmessage" v-if="false">0</span>
@@ -201,7 +201,7 @@
                 </ul>
             </div>
             <div id="messenger__chat__box">
-                <new-group 
+                <new-group
                     :users="users" 
                     v-if="displayNewGroupForm" 
                     @component-event="handleComponentEvent"></new-group>
@@ -213,7 +213,7 @@
                         :me="me" 
                         :target-user="targetUser" 
                         @component-event="handleComponentEvent"
-                        :instant-message-event="messageEvent"></chat-box>
+                        :instant-message-event="incomingMessageEvent"></chat-box>
                 </template>
             </div>
         </div>  
@@ -344,7 +344,7 @@
                 const conversations = ref([])
 
                 const sendMessage = () => {
-                    emit('sendMessage', {from: i.value.userId, to: u.value.userId, message: message.value})
+                    emit('sendMessage', { from: i.value.userId, to: u.value.userId, message: message.value, toType: u.value.type })
                     message.value = ''
                 }
 
@@ -359,13 +359,31 @@
                         return response.json()
                     })
                     .then(data => conversations.value = data)
-                    .catch(e => emit('componentEvent', {type:'C_ERROR',payload: e}))
+                    .catch(e => emit('componentEvent', { type:'C_ERROR',payload: e }))
+                }
+
+                const fetchGroupConversation = (targetGroupId) => {
+                    fetch(`${apiHost}/users/me/groups/${targetGroupId}/messages`,{
+                        method: 'GET',
+                        credentials: "include"
+                    })
+                    .then(response => {
+                        if (!response.ok)
+                            throw new Error('Fetch error')
+                        return response.json()
+                    })
+                    .then(data => conversations.value = data)
+                    .catch(e => emit('componentEvent', { type:'C_ERROR',payload: e }))
                 }
 
                 watch(
                     () => u.value,
                     (newValue) => {
-                        fetchConversation(newValue.userId)   
+                        if (newValue.type === 'USER') {
+                            fetchConversation(newValue.userId)
+                        } else {
+                            fetchGroupConversation(newValue.groupId)
+                        }
                     },
                     { deep: true, immediate: true }
                 )
@@ -373,13 +391,27 @@
                 watch(
                     () => instantMessageEvent.value,
                     (imEvent) => {
-                        //console.log(`watchIamEvent = ${JSON.stringify(imEvent)}`)
-                        if(i.value.userId === imEvent?.payload.fromUserId || u.value.userId === imEvent?.payload.fromUserId) {
-                            fetchConversation(u.value.userId)
-                        } else {
-                            console.log("message from other user")
-                        }
-                           
+                        if(imEvent) {
+                            //TODO think and pull respective message
+                            
+                            console.log(`watchIamEvent = ${JSON.stringify(imEvent)}`)
+                            switch(imEvent.type) {
+                                case "MESSAGE":
+                                    console.log('MESSAGE.......')
+                                    break;
+                                case "GROUP_MESSAGE":
+                                    console.log('GROUP_MESSAGE.......')
+                                    break;
+                                default:
+                                    console.log(imEvent) 
+                            }
+                            
+                            if(i.value.userId === imEvent?.payload.fromUserId || u.value.userId === imEvent?.payload.fromUserId) {
+                                fetchConversation(u.value.userId)
+                            } else {
+                                //fetchGroupConversation(u.value.groupId)
+                            }
+                        }  
                     },
                     { deep: true, immediate: true }
                 )
@@ -400,13 +432,17 @@
             const displayNewGroupForm = ref(false)
             const userGroups = ref([])
             let stompClient = null;
-            const messageEvent = ref(null)
+            const incomingMessageEvent = ref(null)
 
             const handleComponentEvent = (componentEvent) => {
+
+                console.log(componentEvent)
                 
-                // if(componentEvent === 'C_NEW_GROUP') {
-                //     fetchUsersGroup()
-                // }
+                if(componentEvent.type === 'C_NEW_GROUP') {
+                    displayNewGroupForm.value = false
+                } else if(componentEvent.type === 'C_ERROR') {
+                    error.value = componentEvent.payload
+                }
             }
             
             const whoami = () => {
@@ -458,12 +494,14 @@
             }
 
             const sendInstantMessage = (instantMessage) => {
-                console.log(instantMessage)
+                console.log(`send InstantMessage: ${JSON.stringify(instantMessage)}`)
+                
                 var instantMessageRequest = {
-                    type: 'USER',
+                    type: instantMessage.toType,
                     to: instantMessage.to,
                     content: instantMessage.message 
                 }
+                
                 if (stompClient && stompClient.connected) {
                     stompClient.send('/app/private', {}, JSON.stringify(instantMessageRequest));
                 } else {
@@ -497,16 +535,18 @@
                     stompClient.subscribe('/user/queue/private', message => {
                         //console.log('Received: ' + message.body)
                         var instantMessage = JSON.parse(message.body)
+                        console.log(`Received EventType : ${instantMessage.type}`)
+                        
                         if(instantMessage.type === 'NEW_GROUP') {
-                            console.log('NEW_GROUP')
-                            setInterval(() => {
-                                fetchUsersGroup()
+                            setTimeout(() => {
+                                fetchUsersGroup(); // Called once after 2 seconds
                             }, 2000);
                             
                         } else if(instantMessage.type === 'MESSAGE') {
-                            console.log('MESSAGE')
                             //act on message count as well
-                            messageEvent.value = instantMessage
+                            incomingMessageEvent.value = instantMessage
+                        } else if(instantMessage.type === 'GROUP_MESSAGE') {
+                            incomingMessageEvent.value = instantMessage
                         } else {
                             console.log(instantMessage)
                         }
@@ -521,7 +561,7 @@
             return {
                 message, error, targetUser, me, users, logout, 
                     displayNewGroupForm, sendInstantMessage, userGroups,
-                    handleComponentEvent, messageEvent
+                    handleComponentEvent, incomingMessageEvent
             }
         },
         components: { ChatBox, NewGroup }
