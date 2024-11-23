@@ -2,27 +2,114 @@
 @EXAMPLE_USERNAME=Alice
 @EXAMPLE_ACCESS_KEY=password
 
-### create new user
-POST {{HOST}}/user
+###
+GET {{HOST}}/csrf
+
+> {%
+    client.global.set("csrf_key", response.body.headerName);
+    client.global.set("csrf_value", response.body.token);
+%}
+
+
+###
+POST {{HOST}}/signup
+Accept: application/json
+Content-Type: application/json
+X-CSRF-TOKEN: {{csrf_value}}
+
+{
+  "username": "user{{$random.integer(1, 1000)}}",
+  "password": "password",
+  "email": "{{$random.email}}"
+}
+
+###
+GET {{HOST}}/who-am-i
 Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
 Accept: application/json
 Content-Type: application/json
 
-{
-  "username": "dummy",
-  "password": "password",
-  "email": "bob@samit.net"
-}
+###
+GET {{HOST}}/me
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json
 
-
-### all users
-GET {{HOST}}/user
+###
+GET {{HOST}}/users
 Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
 Accept: application/json
 
 
 ### get user by id
-GET{{HOST}}/user/1
+GET{{HOST}}/users/1
 Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
 Accept: application/json
 
+
+### MESSAGES
+###
+GET {{HOST}}/users/me/messages/2
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+
+###
+GET {{HOST}}/users/me/messages/2/unread-messages-count
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+
+
+
+### GROUPS
+###
+GET {{HOST}}/users/me/groups
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+
+###
+POST {{HOST}}/users/me/groups
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json
+X-CSRF-TOKEN: {{csrf_value}}
+
+{
+  "groupName": "1994School",
+  "members": [
+    {
+      "userId": 2
+    },
+    {
+      "userId": 3
+    }
+  ]
+}
+
+###
+PATCH {{HOST}}/users/me/groups/1
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json
+X-CSRF-TOKEN: {{csrf_value}}
+
+{
+  "groupName": "School"
+}
+
+###
+GET {{HOST}}/users/me/groups/1/unread-messages-count
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json
+
+###
+GET {{HOST}}/users/me/groups/1/messages
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json
+
+###
+DELETE {{HOST}}/users/me/groups/1
+Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
+Accept: application/json
+Content-Type: application/json

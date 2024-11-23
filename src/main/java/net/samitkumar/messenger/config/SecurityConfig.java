@@ -1,5 +1,6 @@
 package net.samitkumar.messenger.config;
 
+import jakarta.servlet.DispatcherType;
 import lombok.SneakyThrows;
 import net.samitkumar.messenger.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
@@ -8,23 +9,18 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.session.InvalidSessionStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-
-import static jakarta.servlet.DispatcherType.ERROR;
-import static jakarta.servlet.DispatcherType.FORWARD;
 
 @EnableWebSecurity
 @Configuration
@@ -36,24 +32,22 @@ public class SecurityConfig {
 
     @Bean
     @SneakyThrows
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)  {
-        http
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        return http
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/signup", "/users/me/groups")) // this way we can disable csrf for one endpoint
+                //TODO Find out by passing csrf token in header for /signup did not work
+                .authorizeHttpRequests((authorize) -> authorize
+                        .dispatcherTypeMatchers(HttpMethod.GET, DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/register", "/csrf", "/signup", "/static/**", "/error").permitAll()
+                        //.requestMatchers(HttpMethod.POST, "/register").permitAll() // more specific way , but above can be used as well
+                        .anyRequest()
+                        .authenticated())
+                .formLogin(Customizer.withDefaults()) //we can have a customise login page as well
+                .httpBasic(Customizer.withDefaults())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(authorize -> authorize
-                        .dispatcherTypeMatchers(FORWARD, ERROR).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/signup").permitAll()
-                        .requestMatchers("/register" ,"/static/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
-                )
-                .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(Customizer.withDefaults()) //For Basic auth
-                .formLogin(Customizer.withDefaults()); // For Basic Form Login
-
-        return http.build();
+                .build();
     }
+
 
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

@@ -23,10 +23,10 @@
             width: 100px;
         }
         .validation-e {
-            border-right: 5px solid red;
+            border-right: 8px solid red;
         }
         .validation-s {
-            border-right: 5px solid green;
+            border-right: 8px solid green;
         }
     </style>
 </head>
@@ -43,16 +43,16 @@
                     </label>
                 </div>
                 <div style="flex: 2; display: flex; flex-direction: row; gap: 30px;">
-                    <div style="flex: 1" :class="(user.password !== '' && user.re_password !== '' && user.password === user.re_password) ? '' : 'validation-e'">
+                    <div style="flex: 1">
                         <label>
                             Password: <br/>
-                            <input type="password" name="password" placeholder="Password" v-model="user.password" >
+                            <input type="password" name="password" placeholder="Password" v-model="user.password" :class="(user.password !== '' && user.re_password !== '' && user.password === user.re_password) ? '' : 'validation-e'" >
                         </label>
                     </div>
-                    <div style="flex: 2" :class="(user.password !== '' && user.re_password !== '' && user.password === user.re_password) ? '' : 'validation-e'">
+                    <div style="flex: 2">
                         <label>
                             Repeat Password: <br/>
-                            <input type="password" name="repeat-password" placeholder="Repeat Password" v-model="user.re_password">
+                            <input type="password" name="repeat-password" placeholder="Repeat Password" v-model="user.re_password" :class="(user.password !== '' && user.re_password !== '' && user.password === user.re_password) ? '' : 'validation-e'">
                         </label>
                     </div>
                 </div>
@@ -92,35 +92,47 @@
                     email: ''
                 })
                 const signup = () => {
-                    fetch(`${apiHost}/signup`,{
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(user.value)
-                    })
+                    fetch(`${apiHost}/csrf`)
                         .then(response => {
                             if(!response.ok)
-                                throw new Error(`signUp error ${response.status}`)
+                                throw new Error(`csrf error ${response.status}`)
                             return response.json()
                         })
                         .then(data => {
-                            user.value = {
-                                username: '',
-                                password: '',
-                                re_password: '',
-                                email: ''
-                            }
-                            msg.value = `It's SUCCESS. ${JSON.stringify(data)}. Will take you to the login page, soon...`
-                            setTimeout(() => {
-                                if(mode === 'SPA')
-                                    window.location = "login.html"
-                                else
-                                    window.location = `${apiHost}/login`
+                            fetch(`${apiHost}/signup`,{
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': data.token
+                                },
+                                body: JSON.stringify(user.value)
+                            })
+                                .then(response => {
+                                    if(!response.ok)
+                                        throw new Error(`signUp error ${response.status}`)
+                                    return response.json()
+                                })
+                                .then(data => {
+                                    user.value = {
+                                        username: '',
+                                        password: '',
+                                        re_password: '',
+                                        email: ''
+                                    }
+                                    msg.value = `It's SUCCESS. ${JSON.stringify(data)}. Will take you to the login page, soon...`
+                                    setTimeout(() => {
+                                        if(mode === 'SPA')
+                                            window.location = "login.html"
+                                        else
+                                            window.location = `${apiHost}/login`
 
-                            }, 2000)
+                                    }, 2000)
+                                })
+                                .catch(error => e.value = error.message)
                         })
                         .catch(error => e.value = error.message)
+                    
                 }
 
                 return {

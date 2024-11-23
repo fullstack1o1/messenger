@@ -1,8 +1,0 @@
-@HOST=http://localhost:8080
-@EXAMPLE_USERNAME=Alice
-@EXAMPLE_ACCESS_KEY=password
-
-### fetch - between 1 and 2
-GET {{HOST}}/message/between/me/2
-Authorization: Basic {{EXAMPLE_USERNAME}} {{EXAMPLE_ACCESS_KEY}}
-Accept: application/json

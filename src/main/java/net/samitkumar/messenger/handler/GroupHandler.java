@@ -1,17 +1,21 @@
-package net.samitkumar.messenger.controller.handlers;
+package net.samitkumar.messenger.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.samitkumar.messenger.entity.Group;
 import net.samitkumar.messenger.entity.GroupMember;
 import net.samitkumar.messenger.entity.User;
+import net.samitkumar.messenger.model.InstantMessageResponse;
 import net.samitkumar.messenger.repository.GroupRepository;
+import net.samitkumar.messenger.repository.UserRepository;
+import net.samitkumar.messenger.service.InstantMessageService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,6 +26,8 @@ import static java.util.Objects.nonNull;
 @RequiredArgsConstructor
 public class GroupHandler {
     final GroupRepository groupRepository;
+    final InstantMessageService instantMessageService;
+    final UserRepository userRepository;
 
     @SneakyThrows
     public ServerResponse newGroup(ServerRequest request) {
@@ -29,12 +35,16 @@ public class GroupHandler {
         var user = getCurrentUser();
         newGroup.setCreatedBy(user.getUserId());
 
-        //TODO try to maintain the createdUser in GroupMember Table
         if (nonNull(newGroup.getMembers()) && !newGroup.getMembers().isEmpty()) {
             newGroup.getMembers().add(GroupMember.builder().userId(user.getUserId()).build());
         } else {
             newGroup.setMembers(Set.of(GroupMember.builder().userId(user.getUserId()).build()));
         }
+
+        //notify all the member of the group
+        newGroup.getMembers().forEach(groupMember -> {
+            userRepository.findById(groupMember.getUserId()).ifPresent(u -> instantMessageService.sendInstantMessage(InstantMessageResponse.Type.NEW_GROUP, newGroup.getCreatedBy(), u.getUsername(), "You have been added to a group"));
+        });
 
         return ServerResponse.ok().body(groupRepository.save(newGroup));
     }
@@ -80,5 +90,17 @@ public class GroupHandler {
             groupInDb.getMembers().addAll(dataToBeUpdated.getMembers());
         }
         return ServerResponse.ok().body(groupRepository.save(groupInDb));
+    }
+
+    public ServerResponse deleteGroup(ServerRequest request) {
+        var groupId = Long.parseLong(request.pathVariable("groupId"));
+        var user = getCurrentUser();
+        groupRepository.findByGroupIdAndCreatedBy(groupId, user.getUserId()).ifPresent(groupRepository::delete);
+        return ServerResponse.ok().build();
+    }
+
+    public ServerResponse unreadMessagesCount(ServerRequest request) {
+        var groupId = Long.parseLong(request.pathVariable("groupId"));
+        return ServerResponse.ok().body(Map.of("count",1));
     }
 }

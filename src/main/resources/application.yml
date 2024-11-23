@@ -11,6 +11,9 @@ spring:
     url: ${spring.datasource.url}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
+  mvc:
+    problemdetails:
+      enabled: true
 
 logging:
   level:
