@@ -398,18 +398,27 @@
                             switch(imEvent.type) {
                                 case "MESSAGE":
                                     console.log('MESSAGE.......')
+                                    //message from me ?
+                                    //message from currently selectd user?
+                                    if(i.value.userId === imEvent?.payload.fromUserId || u.value.userId === imEvent?.payload.fromUserId) {
+                                        fetchConversation(u.value.userId)
+                                    }
+                                    
+                                    //message from other user?
+                                    //fetch the unread message count against that user
+
                                     break;
                                 case "GROUP_MESSAGE":
                                     console.log('GROUP_MESSAGE.......')
+                                    //{"type":"GROUP_MESSAGE","payload":{"type":"GROUP_MESSAGE","fromUserId":1,"toUserId":1,"message":"hus","timestamp":null}}
+                                    //message from me ?
+                                    //message to currently selectd group (one of the member from the group)?
+                                    if(i.value.userId === imEvent?.payload.fromUserId || u.value.groupId === imEvent?.payload.toUserId) {
+                                        fetchGroupConversation(u.value.groupId)
+                                    }
                                     break;
                                 default:
                                     console.log(imEvent) 
-                            }
-                            
-                            if(i.value.userId === imEvent?.payload.fromUserId || u.value.userId === imEvent?.payload.fromUserId) {
-                                fetchConversation(u.value.userId)
-                            } else {
-                                //fetchGroupConversation(u.value.groupId)
                             }
                         }  
                     },
