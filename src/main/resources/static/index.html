@@ -44,17 +44,17 @@
         }
 
         #messenger__users ul li:hover {
-            background-color: blue;
+            background-color: lightblue;
             color: white;
             border-radius: 5px;
 
         }
 
         .messenger__user__selected {
-            background-color: blue;
+            background-color: lightblue;
             color: white;
             border-radius: 5px;
-            
+            border-color: blue;
         }
 
         .messenger__user {
@@ -177,7 +177,7 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <div id="app">
         <h1>{{ message }}</h1>
-        <div style="display: flex; justify-content: space-between;">
+        <div style="display: flex; justify-content: space-between; text-align: left;">
             <p>Welcome, {{ me?.username }}</p>
             <p style="color: blue; cursor: pointer;" @click="logout()">Logout</p>
         </div>
@@ -186,17 +186,24 @@
         <div id="messenger">
             <div id="messenger__users">
                 <ul>
-                    <li :class=" targetUser === user ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="user in users" @click="() => targetUser = { ...user, type: 'USER'}">
-                        <span class="messenger__user__profile">&#128115;</span>
-                        <span class="messenger__user__name">{{ user.username }}</span>
-                        <span class="messenger__user__onlinestatus" v-if="user.online"></span>
-                        <span class="messenger__user__unreadmessage" v-if="false">0</span>
+                    <li 
+                        :class=" targetUser?.name === user.username ? 'messenger__user__selected messenger__user' : 'messenger__user' " 
+                        v-for="user in users" 
+                        @click="() => targetUser = { ...user, name: user.username, type: 'USER'}">
+                            <span class="messenger__user__profile">&#128115;</span>
+                            <span class="messenger__user__name">{{ user.username }}</span>
+                            <span class="messenger__user__onlinestatus" v-if="user.online"></span>
+                            <span class="messenger__user__unreadmessage" v-if="false">0</span>
                     </li>
+                    <hr/>
                     <li :class="displayNewGroupForm ? 'messenger__user__selected' : ''" @click="() => displayNewGroupForm = !displayNewGroupForm">{{ displayNewGroupForm ? '- New Group' : '+ New Group'}}</li>
-                    <li :class=" targetUser === group ? 'messenger__user__selected messenger__user' : 'messenger__user' " v-for="group in userGroups" @click="() => targetUser = { ...group, userId: group.groupId, username: group.groupName, type: 'GROUP' }">
-                        <span class="messenger__user__profile">&#128115;</span>
-                        <span class="messenger__user__name">{{ group.groupName }}</span>
-                        <span class="messenger__user__unreadmessage" v-if="false">0</span>
+                    <li 
+                        :class=" targetUser?.name === group.groupName ? 'messenger__user__selected messenger__user' : 'messenger__user' " 
+                        v-for="group in userGroups" 
+                        @click="() => targetUser = { ...group, name: group.groupName, type: 'GROUP' }">
+                            <span class="messenger__user__profile">&#128115;</span>
+                            <span class="messenger__user__name">{{ group.groupName }}</span>
+                            <span class="messenger__user__unreadmessage" v-if="false">0</span>
                     </li>
                 </ul>
             </div>
@@ -213,7 +220,8 @@
                         :me="me" 
                         :target-user="targetUser" 
                         @component-event="handleComponentEvent"
-                        :instant-message-event="incomingMessageEvent"></chat-box>
+                        :instant-message-event="incomingMessageEvent"
+                        :users="users"></chat-box>
                 </template>
             </div>
         </div>  
@@ -226,30 +234,15 @@
         <div >
             <h2 id="messenger__chat__box_h2">
                 <span class="messenger__user__profile">&#128115;</span> 
-                {{ u?.username }}
+                {{ u?.name }}
             </h2>
             <div id="messenger__chat__box__messages">
                 <ul>
                     <li :class="conversation.senderId === me.userId ? 'messenger__chat__box__message__IN' : 'messenger__chat__box__message__OUT'" v-for="conversation in conversations">
-                        <small>{{conversation.senderId === me.userId ? 'Me:' : conversation.senderId}}</small>
+                        <small>{{conversation.senderId === me.userId ? 'Me:' : users.find(user => user.userId === conversation.senderId).username}}</small>
                         <span>{{conversation.content}}</span>
                         <small>{{conversation.createdAt}}</small>
                     </li>
-                    <!-- <li class="messenger__chat__box__message__IN">
-                        <small>User:</small>
-                        <span>Hi, How are you?</span>
-                        <small>10:00 AM</small>
-                    </li>
-                    <li class="messenger__chat__box__message__OUT">
-                        <small>Me:</small>
-                        <span>Hi, How are you?</span>
-                        <small>10:00 AM</small>
-                    </li>
-                    <li class="messenger__chat__box__message__OUT">
-                        <small>Me:</small>
-                        <span>Hi, Uu there?</span>
-                        <small>10:00 AM</small>
-                    </li> -->
                 </ul>
 
             </div>
@@ -334,17 +327,26 @@
     
     const ChatBox = {
             template: '#chatBox',
-            props: ['me','targetUser', 'instantMessageEvent'],
+            props: ['me','targetUser', 'instantMessageEvent', 'users'],
             emits: ['sendMessage', 'componentEvent'],
             setup(props, { emit }) {
                 const i = toRef(props, 'me')
                 const u = toRef(props, 'targetUser')
                 const instantMessageEvent = toRef(props, 'instantMessageEvent')
+                const users = toRef(props, 'users')
                 const message = ref('')
                 const conversations = ref([])
 
                 const sendMessage = () => {
-                    emit('sendMessage', { from: i.value.userId, to: u.value.userId, message: message.value, toType: u.value.type })
+                    emit(
+                        'sendMessage', 
+                        { 
+                            from: i.value.userId, 
+                            to: u.value.type === 'USER' ? u.value.userId : u.value.groupId, 
+                            message: message.value, 
+                            toType: u.value.type 
+                        }
+                    )
                     message.value = ''
                 }
 
@@ -401,6 +403,7 @@
                                     //message from me ?
                                     //message from currently selectd user?
                                     if(i.value.userId === imEvent?.payload.fromUserId || u.value.userId === imEvent?.payload.fromUserId) {
+                                        //insted of fetching from db , we can read from the event payload
                                         fetchConversation(u.value.userId)
                                     }
                                     
@@ -410,10 +413,10 @@
                                     break;
                                 case "GROUP_MESSAGE":
                                     console.log('GROUP_MESSAGE.......')
-                                    //{"type":"GROUP_MESSAGE","payload":{"type":"GROUP_MESSAGE","fromUserId":1,"toUserId":1,"message":"hus","timestamp":null}}
+                                    //
                                     //message from me ?
                                     //message to currently selectd group (one of the member from the group)?
-                                    if(i.value.userId === imEvent?.payload.fromUserId || u.value.groupId === imEvent?.payload.toUserId) {
+                                    if(i.value.userId === imEvent?.payload.fromUserId || u.value.groupId === imEvent?.payload.toGroupId) {
                                         fetchGroupConversation(u.value.groupId)
                                     }
                                     break;
@@ -426,7 +429,7 @@
                 )
 
                 return {
-                    i, u, message, sendMessage, conversations
+                    i, u, message, sendMessage, conversations, users
                 }
             }
         }

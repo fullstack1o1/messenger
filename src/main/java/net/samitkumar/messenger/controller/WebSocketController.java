@@ -93,7 +93,7 @@ public class WebSocketController {
                     .payload(InstantMessageResponse.Payload.builder()
                             .type(InstantMessageResponse.Type.GROUP_MESSAGE)
                             .fromUserId(user.getUserId())
-                            .toUserId(messageToGroup.getGroupId())
+                            .toGroupId(messageToGroup.getGroupId())
                             .message(imRequest.getContent())
                             .build())
                     .build();

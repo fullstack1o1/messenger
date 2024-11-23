@@ -25,6 +25,7 @@ public class InstantMessageResponse {
         private Type type;
         private Long fromUserId;
         private Long toUserId;
+        private Long toGroupId;
         private String message;
         private LocalDateTime timestamp;
     }
