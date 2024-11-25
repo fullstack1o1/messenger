@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+
+  db:
+    image: postgres
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: messenger
+
+  messenger:
+    image: ghcr.io/fullstack1o1/messenger:12011644013
+    restart: on-failure
+    depends_on:
+      - "db"
+    ports:
+      - target: 8080
+        published: 8080
+        mode: ingress
+    environment:
+      spring.datasource.url: 'jdbc:postgresql://db:5432/messenger'
+      spring.datasource.username: 'admin'
+      spring.datasource.password: 'password'
+      spring.flyway.enabled: 'true'
+    deploy:
+      replicas: 2
+      mode: replicated
+      update_config:
+        order: stop-first
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 700M
+        reservations:
+          cpus: '0.25'
+          memory: 100M
