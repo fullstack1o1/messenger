@@ -5,7 +5,7 @@ services:
     routes:
       - name: messenger-route
         paths:
-          - /
+          - /**
         strip_path: true
 
 
