@@ -45,6 +45,9 @@ public class SecurityConfig {
                 .formLogin(Customizer.withDefaults()) //we can have a customise login page as well
                 .httpBasic(Customizer.withDefaults())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                )
                 .logout(logout -> logout
                         .deleteCookies("JSESSIONID")
                 )
@@ -70,4 +73,8 @@ record UserService(UserRepository userRepository) implements UserDetailsService 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
     }
+}
+
+@Configuration
+class SessionConfig {
 }
