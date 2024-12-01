@@ -45,6 +45,9 @@ public class SecurityConfig {
                 .formLogin(Customizer.withDefaults()) //we can have a customise login page as well
                 .httpBasic(Customizer.withDefaults())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .logout(logout -> logout
+                        .deleteCookies("JSESSIONID")
+                )
                 .build();
     }
 
