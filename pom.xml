@@ -55,6 +55,10 @@
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-core</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>

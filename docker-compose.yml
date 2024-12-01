@@ -1,26 +1,26 @@
 version: '3.9'
 
 services:
-  kong:
-    image: kong/kong-gateway:3.8
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: "/kong/declarative/kong.yml"
-    ports:
-      - target: 8000
-        published: 8000
-        mode: host
-      - target: 8443
-        published: 8443
-        mode: host
-      - target: 8001
-        published: 8001
-        mode: host
-      - target: 8444
-        published: 8444
-        mode: host
-    volumes:
-      - ./kong.yml:/kong/declarative/kong.yml
+#  kong:
+#    image: kong/kong-gateway:3.8
+#    environment:
+#      KONG_DATABASE: "off"
+#      KONG_DECLARATIVE_CONFIG: "/kong/declarative/kong.yml"
+#    ports:
+#      - target: 8000
+#        published: 8000
+#        mode: host
+#      - target: 8443
+#        published: 8443
+#        mode: host
+#      - target: 8001
+#        published: 8001
+#        mode: host
+#      - target: 8444
+#        published: 8444
+#        mode: host
+#    volumes:
+#      - ./kong.yml:/kong/declarative/kong.yml
 
   db:
     image: postgres
