@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
 import java.util.List;
 
 @EnableWebSecurity
@@ -43,8 +43,11 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated())
                 .formLogin(Customizer.withDefaults()) //we can have a customise login page as well
-                .httpBasic(Customizer.withDefaults())
+                //.httpBasic(Customizer.withDefaults())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                )
                 .logout(logout -> logout
                         .deleteCookies("JSESSIONID")
                 )
@@ -70,4 +73,9 @@ record UserService(UserRepository userRepository) implements UserDetailsService 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
     }
+}
+
+@Configuration
+@EnableJdbcHttpSession(maxInactiveIntervalInSeconds = 1800)
+class SessionConfig {
 }
